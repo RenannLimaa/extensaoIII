@@ -40,6 +40,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "langchain-google-genai" },
     { name = "psycopg2" },
+    { name = "pydantic" },
     { name = "uvicorn" },
 ]
 
@@ -48,6 +49,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.135.1" },
     { name = "langchain-google-genai", specifier = ">=4.2.1" },
     { name = "psycopg2", specifier = ">=2.9.11" },
+    { name = "pydantic", specifier = ">=2.12.5" },
     { name = "uvicorn", specifier = ">=0.42.0" },
 ]
 

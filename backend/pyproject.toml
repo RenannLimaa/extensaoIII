@@ -8,5 +8,6 @@ dependencies = [
     "fastapi>=0.135.1",
     "langchain-google-genai>=4.2.1",
     "psycopg2>=2.9.11",
+    "pydantic>=2.12.5",
     "uvicorn>=0.42.0",
 ]
