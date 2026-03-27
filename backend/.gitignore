@@ -12,3 +12,6 @@ wheels/
 
 # Variaveis ambiente
 .env
+
+# Codigos de teste
+teste.py
