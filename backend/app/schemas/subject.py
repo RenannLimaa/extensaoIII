@@ -1,5 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class SubjectSchema(BaseModel):
     id: int
-    name: str
+    name: str = Field(max_length=254)
