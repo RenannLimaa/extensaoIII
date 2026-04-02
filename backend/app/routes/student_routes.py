@@ -34,10 +34,3 @@ def updateUserInfo(item: StudentSchema):
     if not existe:
         raise HTTPException(status_code=404, detail="Não existe usuário com esse username")
     return {"message": "Usuário atualizado com sucesso!"}
-
-#funções de questão -----------------------------------------------
-@router.get("/questions/")
-def retrieveAllQuestions():
-    #[chama função que retorna a lista total de questões]
-    questions = {"questions": [QuestionSchema(id=1, text="Quanto é 1+1?", id_subject=1)]} #placeholder
-    return questions
