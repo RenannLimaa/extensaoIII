@@ -38,3 +38,53 @@ uv run uvicorn main:app --reload
 ```
 
 Access `http://localhost:8000/` and check if the returned message is `Hello World`. If it is, the project was correctly set up. 
+
+# Running the frontend
+
+## Requirements
+
+### `npm`
+
+This project uses a workspace at the repository root. Make sure you have Node.js and npm installed.
+
+## Install dependencies
+
+From the repository root:
+
+```bash
+npm install
+```
+
+## Run the frontend
+
+From the repository root:
+
+```bash
+npm run dev
+```
+
+Or directly inside the frontend folder:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The application will be available at `http://localhost:3000/`.
+
+## Build for production
+
+From the repository root:
+
+```bash
+npm run build
+```
+
+## Start production mode
+
+From the repository root:
+
+```bash
+npm run start
+```
