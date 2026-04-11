@@ -1,9 +1,9 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-class SubjectModel(Base):
-    __tablename__ = "subject"
+class TopicModel(Base):
+    __tablename__ = "topic"
 
     # id: int -> Chave primária
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -11,6 +11,12 @@ class SubjectModel(Base):
     # name: str -> Campo de texto com limite de 254 caracteres
     name = Column(String(254), nullable=False)
 
+    # 1. Definimos a ForeignKey apontando para: nome_da_tabela.coluna
+    id_subject = Column(Integer, ForeignKey("subject.id"), nullable=False, index=True)
+
+
     # Relação: Permite acessar as questões ligadas a este tópico
     # topic.questions -> retornará uma lista de QuestionModel
-    # topics = relationship("TopicModel", back_populates="subject")
+    # questions = relationship("QuestionModel", back_populates="topic")
+
+    topics = relationship("SubjectModel", back_populates="topics")

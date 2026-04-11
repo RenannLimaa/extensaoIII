@@ -18,11 +18,11 @@ class QuestionRepository:
         self.session.refresh(new_question)
         return new_question
 
-    def get_by_subject(self, subject_name: str):
-        """Busca questões onde o objeto subject relacionado tem o nome X."""
+    def get_by_topic(self, topic_name: str):
+        """Busca questões onde o objeto topic relacionado tem o nome X."""
         questions = (
             self.session.query(QuestionModel)
-            .filter(QuestionModel.subject.has(name=subject_name))
+            .filter(QuestionModel.topic.has(name=topic_name))
             .all()
         )
         return questions if questions else None

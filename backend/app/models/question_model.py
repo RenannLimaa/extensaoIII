@@ -12,8 +12,8 @@ class QuestionModel(Base):
     text = Column(String(1000), nullable=False)
     
     # 1. Definimos a ForeignKey apontando para: nome_da_tabela.coluna
-    id_subject = Column(Integer, ForeignKey("subject.id"), nullable=False, index=True)
+    id_topic = Column(Integer, ForeignKey("topic.id"), nullable=False, index=True)
 
     # 2. Criamos uma relação para facilitar a busca no Python
-    # Isso permite fazer: question.subject.name
-    subject = relationship("SubjectModel", back_populates="questions")
+    # Isso permite fazer: question.topic.name
+    topic = relationship("TopicModel", back_populates="questions")

@@ -12,10 +12,10 @@ class QuestionService:
 
         return self.repository.save(question_data)
 
-    def get_questions_by_subject(self, subject: str):
-        questions = self.repository.get_by_subject(subject)
+    def get_questions_by_topic(self, topic: str):
+        questions = self.repository.get_by_topic(topic)
 
         if questions is None:  # Em Python, prefira 'is None' a '== None'
-            raise ValueError("Não existem questões desse assunto.")
+            raise ValueError("Não existem questões desse tópico.")
 
         return questions
