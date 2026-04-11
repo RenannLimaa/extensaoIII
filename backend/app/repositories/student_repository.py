@@ -9,6 +9,10 @@ class StudentRepository:
     def get_by_email(self, email: str):
         """Busca um estudante pelo e-mail para validar duplicidade ou login."""
         return self.session.query(StudentModel).filter(StudentModel.email == email).first()
+    
+    def get_by_id(self, id_student: int):
+        """Busca um estudante pelo ID, útil para validação de existência."""
+        return self.session.query(StudentModel).filter(StudentModel.id == id_student).first()
 
     def save(self, student_data: dict):
         """Converte o dicionário em Model, salva no banco e retorna o objeto."""

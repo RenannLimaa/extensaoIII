@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 class StudentModel(Base):
@@ -15,3 +16,5 @@ class StudentModel(Base):
     
     # password: Campo para armazenar o hash da senha
     password = Column(String(254), nullable=False)
+
+    chats = relationship("ChatModel", back_populates="student")

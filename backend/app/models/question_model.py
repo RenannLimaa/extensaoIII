@@ -17,3 +17,4 @@ class QuestionModel(Base):
     # 2. Criamos uma relação para facilitar a busca no Python
     # Isso permite fazer: question.topic.name
     topic = relationship("TopicModel", back_populates="questions")
+    chatquestions = relationship("ChatQuestionModel", back_populates="question")
