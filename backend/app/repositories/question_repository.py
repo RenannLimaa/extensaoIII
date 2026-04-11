@@ -1,5 +1,5 @@
 # app/repositories/question_repository.py
-from app.models.QuestionModel import QuestionModel # A classe da tabela
+from app.models.question_model import QuestionModel # A classe da tabela
 from sqlalchemy.orm import Session
 
 class QuestionRepository:
@@ -18,8 +18,11 @@ class QuestionRepository:
         self.session.refresh(new_question)
         return new_question
 
-    def get_by_subject(self, subject: str):
-        """Busca todas as questões de um assunto específico."""
-        questions = self.session.query(QuestionModel).filter(QuestionModel.subject == subject).all()
-        # Se a lista estiver vazia, retornamos None para o Service disparar o erro
+    def get_by_subject(self, subject_name: str):
+        """Busca questões onde o objeto subject relacionado tem o nome X."""
+        questions = (
+            self.session.query(QuestionModel)
+            .filter(QuestionModel.subject.has(name=subject_name))
+            .all()
+        )
         return questions if questions else None
