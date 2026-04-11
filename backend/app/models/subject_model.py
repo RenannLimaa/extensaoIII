@@ -13,4 +13,4 @@ class SubjectModel(Base):
 
     # Relação: Permite acessar as questões ligadas a este tópico
     # topic.questions -> retornará uma lista de QuestionModel
-    # topics = relationship("TopicModel", back_populates="subject")
+    topics = relationship("TopicModel", back_populates="subject")
