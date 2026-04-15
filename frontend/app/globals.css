@@ -1,5 +1,11 @@
 :root {
   color-scheme: light;
+  --surface: #ffffff;
+  --surface-soft: #f5f5f6;
+  --line: #d8dde4;
+  --title: #1a2537;
+  --text: #6a788c;
+  --accent: #2aa184;
 }
 
 * {
@@ -10,9 +16,334 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: #ffffff;
+  background: var(--surface-soft);
 }
 
 body {
-  font-family: Arial, sans-serif;
+  color: var(--title);
+  font-family: var(--font-main), 'Segoe UI', sans-serif;
+}
+
+.container {
+  width: min(100%, 860px);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.app-header {
+  border-bottom: 1px solid var(--line);
+  background: #f9f9fa;
+}
+
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+}
+
+.brand-badge {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid #f14f9f;
+  position: relative;
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a9af6;
+  position: absolute;
+  right: -3px;
+  top: 2px;
+}
+
+.brand-text {
+  font-size: 2.15rem;
+  letter-spacing: -0.025em;
+  font-family: var(--font-title), 'Segoe UI', sans-serif;
+  line-height: 1;
+}
+
+.brand-main {
+  color: #1f2937;
+}
+
+.brand-suffix {
+  color: #2aa184;
+}
+
+.main-content {
+  padding-top: 52px;
+  padding-bottom: 56px;
+}
+
+.hero-block {
+  max-width: 740px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.25rem, 5vw, 4.05rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-family: var(--font-title), 'Segoe UI', sans-serif;
+  font-weight: 800;
+}
+
+.hero-title span {
+  display: block;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.hero-subtitle {
+  margin: 16px auto 0;
+  font-size: clamp(1rem, 1.55vw, 1.15rem);
+  line-height: 1.5;
+  color: var(--text);
+  max-width: 660px;
+}
+
+.cards-section {
+  margin-top: 30px;
+}
+
+.section-intro {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  font-weight: 700;
+  color: var(--title);
+}
+
+.section-subtitle {
+  margin: 6px 0 0;
+  color: #708096;
+  font-size: 0.98rem;
+}
+
+.build-grid,
+.subject-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.build-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.subject-grid {
+  margin-top: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 22px 18px 18px;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: #bcc6d2;
+  background: #fcfcfd;
+}
+
+.card:focus-visible {
+  outline: 2px solid rgba(43, 169, 138, 0.3);
+  outline-offset: 2px;
+}
+
+.card-icon,
+.subject-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.card-icon {
+  margin-left: auto;
+  margin-right: auto;
+  background: #f3f6fb;
+}
+
+.build-card {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  text-align: center;
+  text-align: center;
+  padding: 16px 14px 14px;
+  font: inherit;
+  color: inherit;
+}
+
+.build-card .card-icon {
+  width: 42px;
+  height: 42px;
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.build-card .card-title {
+  font-size: 1.55rem;
+}
+
+.build-card .card-badge {
+  margin: 8px 0 8px;
+  font-size: 0.78rem;
+}
+
+.build-card .card-description {
+  font-size: 0.9rem;
+}
+
+.build-card:hover,
+.build-card:focus-visible {
+  border-color: #2aa184;
+}
+
+.build-card.is-active {
+  border-color: #2aa184;
+  background: #f5fcf9;
+}
+
+.active-plate {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background: #2aa184;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.98rem;
+  font-family: var(--font-title), 'Segoe UI', sans-serif;
+  letter-spacing: -0.018em;
+}
+
+.card-badge {
+  display: inline-block;
+  margin: 10px 0 10px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #2b9772;
+  background: #e7f8f0;
+}
+
+.card-description {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+  font-size: 0.97rem;
+}
+
+.subject-card .card-title {
+  font-size: 1.85rem;
+}
+
+.subject-card .card-description {
+  margin-top: 8px;
+}
+
+.subject-green {
+  background: linear-gradient(145deg, #1ec3a6, #0fb58f);
+}
+
+.subject-blue {
+  background: linear-gradient(145deg, #5f8bff, #3a65e9);
+}
+
+.subject-violet {
+  background: linear-gradient(145deg, #9553f3, #7944ea);
+}
+
+.subject-orange {
+  background: linear-gradient(145deg, #f59b22, #ee7b0f);
+}
+
+.subject-pink {
+  background: linear-gradient(145deg, #f04383, #dd2c6d);
+}
+
+@media (max-width: 1024px) {
+  .build-grid,
+  .subject-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .subject-grid {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 700px) {
+  .container {
+    padding: 0 14px;
+  }
+
+  .app-header-inner {
+    min-height: 62px;
+  }
+
+  .brand-text {
+    font-size: 1.8rem;
+  }
+
+  .build-grid,
+  .subject-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-subtitle {
+    margin-top: 12px;
+  }
+
+  .cards-section {
+    margin-top: 24px;
+  }
+
+  .card {
+    padding: 18px 16px;
+  }
+
+  .subject-card .card-title {
+    font-size: 1.72rem;
+  }
 }
