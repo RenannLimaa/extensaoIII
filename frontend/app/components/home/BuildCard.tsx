@@ -1,7 +1,7 @@
-import type { BuildItem } from '../../mocks/homeContent';
+import type { Build } from '../../lib/types';
 
 type BuildCardProps = {
-  item: BuildItem;
+  item: Build;
   isActive: boolean;
   onSelect: (buildId: string) => void;
 };
