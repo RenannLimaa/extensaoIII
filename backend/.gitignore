@@ -14,4 +14,4 @@ wheels/
 .env
 
 # Codigos de teste
-teste.py
+testes/
