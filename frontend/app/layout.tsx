@@ -1,34 +1,40 @@
 import type { ReactNode } from 'react';
-import { Inter, Nunito } from 'next/font/google';
+import { Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from './components/providers/ThemeProvider';
 
-const fontMain = Inter({
+const sans = Inter({
   subsets: ['latin'],
-  variable: '--font-main',
+  variable: '--font-sans-var',
   display: 'swap',
 });
 
-const fontTitle = Nunito({
+const display = Instrument_Serif({
   subsets: ['latin'],
-  variable: '--font-title',
-  weight: ['700', '800', '900'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-display-var',
+  display: 'swap',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono-var',
   display: 'swap',
 });
 
 export const metadata = {
-  title: 'ENEMBot - Tutor ENEM adaptativo',
+  title: 'ENEMBot — Tutor ENEM adaptativo com IA',
   description:
-    'Estude para o ENEM com um tutor que se adapta ao seu ritmo: escolha uma build, escolha a materia e resolva questoes com feedback instantaneo.',
+    'O tutor de IA que se adapta ao seu ritmo. Resolva questões estilo ENEM, receba explicações sob medida e construa um plano de estudo que funciona de verdade.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${fontMain.variable} ${fontTitle.variable}`}>{children}</body>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={`${sans.variable} ${display.variable} ${mono.variable}`}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
