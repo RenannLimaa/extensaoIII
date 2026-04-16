@@ -10,14 +10,14 @@ type Props = {
 
 export function BuildSwitch({ value, onChange }: Props) {
   return (
-    <div className="build-inline" role="tablist" aria-label="Build ativa">
+    <div className="pill-row" role="tablist" aria-label="Build ativa">
       {BUILDS.map((b) => (
         <button
           key={b.id}
           role="tab"
           aria-selected={b.id === value}
           onClick={() => onChange(b.id)}
-          className={`build-pill ${b.id === value ? 'is-active' : ''}`}
+          className={`pill ${b.id === value ? 'is-active' : ''}`}
           title={b.description}
         >
           <span aria-hidden>{b.icon}</span>
