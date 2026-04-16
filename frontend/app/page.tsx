@@ -1,66 +1,58 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { AppHeader } from './components/home/AppHeader';
-import { BuildCard } from './components/home/BuildCard';
-import { SectionIntro } from './components/home/SectionIntro';
-import { SubjectCard } from './components/home/SubjectCard';
-import { BUILDS, SUBJECTS } from './lib/catalog';
+import { Builds } from './components/home/Builds';
+import { FAQ } from './components/home/FAQ';
+import { Features } from './components/home/Features';
+import { FinalCTA } from './components/home/FinalCTA';
+import { Footer } from './components/home/Footer';
+import { Hero } from './components/home/Hero';
+import { LandingNav } from './components/home/LandingNav';
+import { LogosStrip } from './components/home/LogosStrip';
+import { SubjectsShowcase } from './components/home/SubjectsShowcase';
+import { Testimonials } from './components/home/Testimonials';
+import { Workflow } from './components/home/Workflow';
+import { CommandPalette } from './components/chat/CommandPalette';
+import { StudyPlanModal } from './components/chat/StudyPlanModal';
+import { useTheme } from './components/providers/ThemeProvider';
+import type { CommandActionId } from './lib/llm/llmClient';
 
 export default function HomePage() {
-  const [activeBuildId, setActiveBuildId] = useState<string>(BUILDS[0].id);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [studyPlanOpen, setStudyPlanOpen] = useState(false);
+  const { setTheme, theme } = useTheme();
+  const router = useRouter();
+
+  async function runCommand(id: CommandActionId) {
+    if (id === 'open-study-plan') {
+      setStudyPlanOpen(true);
+      return;
+    }
+    if (id === 'toggle-theme') {
+      setTheme(theme === 'light' ? 'dark' : 'light');
+      return;
+    }
+    // maioria das acoes IA so faz sentido dentro do chat — empurra o usuario pra la
+    router.push('/chat/matematica?build=teorico');
+  }
 
   return (
-    <div className="page-shell">
-      <AppHeader brand="ENEMBot" />
+    <div className="landing">
+      <LandingNav onOpenCommand={() => setCmdOpen(true)} />
+      <Hero />
+      <LogosStrip />
+      <Features />
+      <Builds />
+      <SubjectsShowcase buildId="teorico" />
+      <Workflow />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
 
-      <main className="main-content container">
-        <section className="hero-block">
-          <span className="hero-eyebrow">Tutor ENEM personalizado</span>
-          <h1 className="hero-title">
-            Estude ENEM do seu jeito,
-            <span>com um tutor que se adapta</span>
-          </h1>
-          <p className="hero-subtitle">
-            Escolha sua build, escolha a materia e resolva questoes estilo ENEM com
-            feedback instantaneo. Cada build muda como o tutor explica e quais questoes
-            ele escolhe.
-          </p>
-        </section>
-
-        <section className="cards-section">
-          <SectionIntro
-            icon="🎮"
-            title="Escolha seu build de estudo"
-            subtitle="Muda o ritmo, a dificuldade e o nivel de explicacao"
-          />
-
-          <div className="build-grid">
-            {BUILDS.map((item) => (
-              <BuildCard
-                key={item.id}
-                item={item}
-                isActive={item.id === activeBuildId}
-                onSelect={setActiveBuildId}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="cards-section">
-          <SectionIntro
-            icon="📚"
-            title="Qual materia voce quer treinar hoje?"
-            subtitle="Clique em um card para comecar a sessao com o tutor"
-          />
-
-          <div className="subject-grid">
-            {SUBJECTS.map((subject) => (
-              <SubjectCard key={subject.id} subject={subject} buildId={activeBuildId} />
-            ))}
-          </div>
-        </section>
-      </main>
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="global" />
+      <StudyPlanModal open={studyPlanOpen} onOpenChange={setStudyPlanOpen} />
     </div>
   );
 }
