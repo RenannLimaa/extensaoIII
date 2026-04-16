@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.models.student_model import StudentModel
 
 class StudentRepository:
@@ -35,3 +35,16 @@ class StudentRepository:
     def get_all(self):
         """Retorna todos os estudantes cadastrados."""
         return self.session.query(StudentModel).all()
+
+    def get_all_chats_by_student_id(self, student_id: int):
+        student = (
+            self.session.query(StudentModel)
+            .options(selectinload(StudentModel.chats))
+            .filter(StudentModel.id == student_id)
+            .first()
+        )
+        
+        if not student:
+            return None
+
+        return student.chats

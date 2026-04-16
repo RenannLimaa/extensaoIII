@@ -35,3 +35,15 @@ class QuestionRepository:
             .filter(QuestionModel.id == question_id)
             .first()
         )
+
+    def get_ids_by_topic_id(self, topic_id: int):
+        """Retorna todos os IDs das questões de um tópico."""
+        result = (
+            self.session.query(QuestionModel.id)
+            .filter(QuestionModel.id_topic == topic_id)
+            .all()
+        )
+
+        # result vem como [(1,), (2,), (3,)]
+        return [row[0] for row in result]
+

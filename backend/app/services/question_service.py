@@ -40,3 +40,6 @@ class QuestionService:
         }
 
         return question
+
+    def get_all_topic_questions(self, topic_id: int):
+        return self.repository.get_ids_by_topic_id(topic_id)

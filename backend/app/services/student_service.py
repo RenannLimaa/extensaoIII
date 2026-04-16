@@ -64,3 +64,14 @@ class StudentService:
     
     def get_all_students(self):
         return self.repository.get_all()
+
+    def get_all_chats_from_student(self, student_id: int):
+        chats = self.repository.get_all_chats_by_student_id(student_id)
+        
+        chats_objs = [
+            {
+                "id": chat.id
+            } for chat in chats
+        ]
+
+        return chats_objs
