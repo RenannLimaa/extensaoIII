@@ -37,10 +37,26 @@ export type Question = {
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 
+export type SmartSuggestion = {
+  id: string;
+  action:
+    | 'easier'
+    | 'harder'
+    | 'similar'
+    | 'summary'
+    | 'explain-simple'
+    | 'flashcards'
+    | 'next'
+    | 'hint'
+    | 'quiz-topic';
+  label: string;
+  icon?: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: ChatRole;
-  /** Markdown-ish plain text */
+  /** Markdown com suporte a GFM + math ($...$) + <callout>...</callout> */
   content: string;
   /** Quando a mensagem envolve uma questao */
   question?: Question;
@@ -51,6 +67,8 @@ export type ChatMessage = {
     correta: boolean;
     explicacao: string;
   };
+  /** Sugestoes contextuais apos resposta do bot */
+  suggestions?: SmartSuggestion[];
   createdAt: number;
 };
 
