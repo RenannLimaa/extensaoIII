@@ -1,6 +1,6 @@
 # app/repositories/question_repository.py
 from app.models.question_model import QuestionModel # A classe da tabela
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 class QuestionRepository:
     def __init__(self, session: Session):
@@ -26,3 +26,12 @@ class QuestionRepository:
             .all()
         )
         return questions if questions else None
+
+    def get_by_id_with_images(self, question_id: int):
+        """Busca uma questão com todas as suas imagens."""
+        return (
+            self.session.query(QuestionModel)
+            .options(selectinload(QuestionModel.images))
+            .filter(QuestionModel.id == question_id)
+            .first()
+        )

@@ -18,3 +18,4 @@ class QuestionModel(Base):
     # Isso permite fazer: question.topic.name
     topic = relationship("TopicModel", back_populates="questions")
     chatquestions = relationship("ChatQuestionModel", back_populates="question")
+    images = relationship("ImageModel", back_populates="question")

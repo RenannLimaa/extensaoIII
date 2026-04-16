@@ -19,3 +19,24 @@ class QuestionService:
             raise ValueError("Não existem questões desse tópico.")
 
         return questions
+
+    def get_question_with_images(self, question_id: int):
+        question_model = self.repository.get_by_id_with_images(question_id)
+
+        if not question_model:
+            return None
+
+        question = {
+            "id": question_model.id,
+            "text": question_model.text,
+            "topic": question_model.topic.name,
+            "imgs": [
+                {
+                    "id": image.id,
+                    "description": image.description,
+                    "path": image.path,
+                } for image in question_model.images 
+            ]
+        }
+
+        return question
