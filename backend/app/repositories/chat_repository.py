@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models.chat_model import ChatModel
+from app.models.chatquestion_model import ChatQuestionModel
+from app.models.question_model import QuestionModel
+from app.models.prompt_model import PromptModel
 
 class ChatRepository:
     def __init__(self, session: Session):
@@ -23,3 +26,24 @@ class ChatRepository:
         É aqui que usamos a Foreign Key que você definiu.
         """
         return self.session.query(ChatModel).filter(ChatModel.id_student == student_id).all()
+
+
+    """
+    def get_questions(self, chat_id: int):
+        Retorna todas as questões associadas a um chat
+        return (
+            self.session.query(QuestionModel)
+            .join(ChatQuestionModel, ChatQuestionModel.id_question == QuestionModel.id)
+            .filter(ChatQuestionModel.id_chat == chat_id)
+            .all()
+        )
+    """
+
+    def get_questions_with_prompts(self, chat_id: int):
+        return (
+            self.session.query(QuestionModel, PromptModel)
+            .join(ChatQuestionModel, ChatQuestionModel.id_question == QuestionModel.id)
+            .outerjoin(PromptModel, PromptModel.id_chatquestion == ChatQuestionModel.id)
+            .filter(ChatQuestionModel.id_chat == chat_id)
+            .all()
+        )
