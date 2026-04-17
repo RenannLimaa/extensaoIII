@@ -8,8 +8,8 @@ class TopicModel(Base):
     # id: int -> Chave primária
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     
-    # name: str -> Campo de texto com limite de 254 caracteres
-    name = Column(String(254), nullable=False)
+    # name: str -> Campo de texto com limite de 255 caracteres
+    name = Column(String(255), nullable=False)
 
     # 1. Definimos a ForeignKey apontando para: nome_da_tabela.coluna
     id_subject = Column(Integer, ForeignKey("subject.id"), nullable=False, index=True)
