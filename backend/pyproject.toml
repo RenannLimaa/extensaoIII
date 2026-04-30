@@ -5,9 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "dotenv>=0.9.9",
     "fastapi>=0.135.1",
     "langchain-google-genai>=4.2.1",
     "psycopg2>=2.9.11",
     "pydantic[email]>=2.12.5",
+    "supabase>=2.29.0",
     "uvicorn>=0.42.0",
 ]

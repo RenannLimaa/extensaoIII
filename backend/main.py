@@ -1,17 +1,27 @@
 from fastapi import FastAPI, APIRouter
-from app.routes.student_routes import router as student_router
-from app.routes.chat_routes import router as chat_router
-from app.routes.question_routes import router as question_router
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.routes_back.habilcompDB_routes import getCompetenciaByID
 
 app = FastAPI()
+
+origins = [
+    '*'
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 router = APIRouter()
 
 @router.get("/")
 def get_root():
-    return {"message": "Hello World"}
+    return {"message": str(getCompetenciaByID(1, 1))}
 
 app.include_router(router)
-app.include_router(student_router)
-app.include_router(chat_router)
-app.include_router(question_router)
+#adicionar os routers do front de novo depois
