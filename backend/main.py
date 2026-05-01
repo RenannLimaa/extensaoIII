@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes_back.habilcompDB_routes import getCompetenciaByID
+from app.routes_back.userDB_routes import getUserByID
 
 app = FastAPI()
 
@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.get("/")
 def get_root():
-    return {"message": str(getCompetenciaByID(1, 1))}
+    return {"message": str(getUserByID(1))}
 
 app.include_router(router)
 #adicionar os routers do front de novo depois
