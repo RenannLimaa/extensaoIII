@@ -1,5 +1,5 @@
-import datetime
-from pydantic import BaseModel, Field, Optional
+from pydantic import BaseModel, Field
+from typing import Optional
 
 class ChatMessageSchema(BaseModel):
     id: int
@@ -7,4 +7,4 @@ class ChatMessageSchema(BaseModel):
     author: str = Field(max_length=15)
     texto: str = Field(max_length=2500)
     timestamp: str
-    question_id: Optional[str]
+    question_id: Optional[int] = None

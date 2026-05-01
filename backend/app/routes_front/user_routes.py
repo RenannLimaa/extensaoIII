@@ -1,36 +1,75 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.student import StudentSchema
-from app.schemas.chat import ChatSchema
-from app.schemas.prompt import PromptSchema
-from app.schemas.question import QuestionSchema
+from fastapi import APIRouter, HTTPException, Body
+from app.schemas.user import UserSchema
 
-router = APIRouter(prefix="/student", tags=["student"])
+router = APIRouter(prefix="/user", tags=["user"])
 
-#funções de user --------------------------------------------------------
 @router.get("/login/")
-def login(item: StudentSchema):
-    #[chama função de verificar se dados estão corretos e retornar estudante se sim]
-    estudante = StudentSchema(name= "fulano", email= "fulano@mail.com")#placeholder
-    if not estudante:
+def login(email: str = Body(), password: str = Body()):
+    """
+        Recebe email e senha como json e retorna uma mensagem de sucesso, setando o user no back e retornando o UserSchema completo.
+
+        Ex de uso: GET http://127.0.0.1:8000/user/login (corpo no formato {"email": "fulano@mail.com", "password": "123456"})
+    """
+    #chama função de verificar se dados estão corretos e retornar estudante se sim
+    user = UserSchema(id=2, username= "fulano", email= "fulano@mail.com", password="123")#placeholder
+    if not user:
         raise HTTPException(status_code=404, detail="Username ou senha incorretos")
-    #[função de setar dependency com esse usuário atual]
-    return estudante
+    #colocar aqui função de setar dependency com esse usuário atual
+    return user
+
+@router.get("/logout/")
+def login():
+    """
+        Faz logout do usuário.
+
+        Ex de uso: GET http://127.0.0.1:8000/user/logout
+    """
+    #colocar função de tirar o user atual como dependency
+    return {"message": "Usuário saiu com sucesso"}
+
 @router.get("/")
 def userinfo():
-    #[retornar objeto usuário usando dependency]
-    estudante = StudentSchema(name= "fulano", email= "fulano@gmail.com")#retorno placeholder:
-    return estudante
+    """
+        Retorna UserSchema do usuário atualmente logado.
+
+        Ex de uso: GET http://127.0.0.1:8000/user/
+    """
+    #retornar objeto usuário usando dependency
+    user = UserSchema(id=3, username= "fulano", email= "fulano@gmail.com", password="123") #placeholder
+    return user
+
 @router.post("/")
-def register(item: StudentSchema):
-    #[chama função de adicionar no banco de dados, retorna True se o username não existe e a senha é válida]
-    valido = True #placeholder
-    if not valido:
+def register(username: str = Body(), email: str = Body(), password: str = Body()):
+    """
+        Chama a função de adicionar no banco de dados, retorna o UserSchema completo se o username não existe E a senha é válida.
+
+        Ex de uso: POST http://127.0.0.1:8000/user/ (corpo no formato {"username": "fulano", "email": "fulano@mail.com", "password": "123456"})
+    """
+    #verifica se a senha é válida, daí chama createUser em userDB_routes diretamente
+    user = UserSchema(id=3, username= "fulano", email= "fulano@gmail.com", password="123") #placeholder
+    if not user:
         raise HTTPException(status_code=400, detail="Username já existe ou senha é inválida")
-    return {"message": "Usuário registrado com sucesso!"}
+    return user
+
 @router.put("/")
-def updateUserInfo(item: StudentSchema):
-    #[chama função para trocar os dados do usuário com mesmo username que o de entrada, retorna se o username existe]
-    existe = True #placeholder
-    if not existe:
-        raise HTTPException(status_code=404, detail="Não existe usuário com esse username")
+def updateUserInfo(item: UserSchema):
+    """
+        Usa um UserSchema modificado e usa seu id para atualizar o banco de dados. Retorna mensagem de sucesso ou fracasso.
+
+        Ex de uso: PUT http://127.0.0.1:8000/user/ (corpo é UserSchema)
+    """
+    #chama updateUser em userDB_routes diretamente
+    user_atualizado = item #placeholder
+    if not user_atualizado:
+        raise HTTPException(status_code=404, detail="Não existe usuário com esse id")
     return {"message": "Usuário atualizado com sucesso!"}
+
+@router.delete("/")
+def deleteUser():
+    """
+        Apaga o usuário atualmente logado no sistema.
+
+        Ex de uso: DELETE http://127.0.0.1:8000/user/
+    """
+    #usa dependency para pega o user atual, chama a função de logout nele e por fim chama deleteUser nele em userDB_routes
+    return {"message": "Usuário apagado com sucesso"}
