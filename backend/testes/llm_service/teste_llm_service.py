@@ -1,16 +1,31 @@
 from app.services.llm_service import LLMService
 
-from testes.llm_service.prompts import prompt1
-from testes.llm_service.questions import question2
+from testes.llm_service.prompts import prompt1 as prompt
+from testes.llm_service.questions import question2 as question
 from testes.llm_service.queries import query1
 
-model = LLMService('google')
+# O histórico deve ser chamado no serviço?
+history = None
+
+model = LLMService(
+    'google', 
+    history = history
+)
+
 
 call_dict = {
     'knowledge_area': 'Ciências da Natureza',
-    'question': question2,
-    # 'query': query1.format(item1 = 'B', item2 = 'E')
-    'query': "Por que fluxo gênico é a resposta dessa questão?"
-}
+    'question': question,
+    'query': None,
+ }
 
-print(f"Resposta do modelo: {model.call_agent(**call_dict)}")
+
+while True:
+    print("\n" + "=" * 100 + "\n")
+    call_dict['query'] = input("Digite a nova query: ")
+
+    print("\n")
+    # print(model.history)
+    #print("\n")
+
+    print(f"Resposta do modelo: {model.call_agent(**call_dict)}\n")
