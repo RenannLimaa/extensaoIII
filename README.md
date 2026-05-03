@@ -88,3 +88,10 @@ From the repository root:
 ```bash
 npm run start
 ```
+
+## Comandos para inicializar a Base de Dados
+
+1. CREATE DATABASE dbname;  //Apenas se a BD não existir
+2. CREATE USER "user" WITH PASSWORD 'pass'; // substituir pelo seu usuario e senha
+3. GRANT ALL PRIVILEGES ON DATABASE dbname TO "user"; // substuir com o nome da BD e do usuario
+4. GRANT ALL ON SCHEMA public TO 'user'; // Substituir com o nome de usuário
