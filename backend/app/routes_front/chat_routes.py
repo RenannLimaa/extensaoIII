@@ -1,39 +1,72 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.student import StudentSchema
+from fastapi import APIRouter, HTTPException, Body
+from app.schemas.user import UserSchema
 from app.schemas.chat import ChatSchema
-from app.schemas.prompt import PromptSchema
-from app.schemas.question import QuestionSchema
+from app.schemas.chatmessage import ChatMessageSchema
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.get("/}")
 def retrieveAllChats():
-    # [chama função que retorna a lista de chat_id's do user ativo]
-    chats = {"chats": [{"id": 1}]}  # placeholder
+    """
+        Chama função que retorna a lista de todos os ChatSchemas do user ativo no formato {"chats": [ChatSchema1, ChatSchema2, ...]}.
+
+         Ex de uso: POST http://127.0.0.1:8000/chat/
+    """
+    #chama getChatsByUser em chatDB_routes, usando o user_id ativo como argumento
+    chats = {"chats": [ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão1", criado_em="12-01-2026", atualizado_em="12-01-2026")]}  # placeholder
     return chats
-@router.get("/{chat_id}")
-def retrieveChat(chat_id: int):
-    #[chama função que verifica se o chat com esse id existe para o usuário]
-    chats = {"chats": [{"id":chat_id}]} #placeholder
-    if not chats:
-        raise HTTPException(status_code=404, detail="O usuário não possui chat com esse id")
-    return chats
-@router.post("/}")
-def createChat(item: ChatSchema):
-    #[chama função que registra chat]
-    return item
+
+@router.post("/{habilidade_id}")
+def createChat(habilidade_id: int, item: str = Body()):
+    """
+        Chama função que registra chat, dado habilidade e nome do chat. Retorna ChatSchema completo caso tenha sucesso.
+
+        Ex de uso: POST http://127.0.0.1:8000/chat/2 (o nome é passada em json, como {"nome do chat"}
+    """
+    #usa user_id ativo e pode chamar a função createChat em chatDB_routes diretamente eu acho, nem precisa de service
+    chat = ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão1", criado_em="tempo1", atualizado_em="tempo2") #placeholder
+    if not chat:
+        raise HTTPException(status_code=404, detail="Erro ao criar chat")
+    return chat
+
+@router.post("/{chat_id}")
+def updateChatName(chat_id: int, chat_name: str = Body()):
+    """
+        Chama função que atualiza nome do chat, dado o id dele e o nome novo. Retorna mensagem de sucesso ou falha.
+
+        Ex de uso: POST http://127.0.0.1:8000/chat/4 (o nome é passada em json, como {"nome novo!"}
+    """
+    #usa user_id ativo para conseguir seus chats, procura aquele com o chat_id certo, recupera o ChatSchema completo dele, muda o nome e atualiza no db
+    chat = ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão2") #placeholder
+    if not chat:
+        raise HTTPException(status_code=404, detail="Erro ao atualizar chat")
+    return {"message": "Chat atualizado com sucesso!"}
+
 @router.delete("/{chat_id}")
 def deleteChat(chat_id: int):
-    #[chama função que remove o chat do banco de dados, retorna True se ele foi encontrado e apagado]
+    """
+        Chama função que remove o chat do banco de dados, retorna mensagem de sucesso caso tenha sido apagado.
+
+        Ex de uso: DELETE http://127.0.0.1:8000/chat/5
+
+        Retorno: {"message":"Chat 2 apagado com sucesso"}
+    """
     apagado = True #placeholder
     if not apagado:
         raise HTTPException(status_code=404, detail="Nenhum chat com esse id foi achado")
     return {"message":f"Chat {chat_id} apagado com sucesso"}
 
 @router.put("/prompt/{chat_id}")
-def promptAI(item: PromptSchema, chat_id: int):
-    #[chama função que faz prompt de ia no chat com chat_id e user_id do usuário ativo, retornando a resposta]
-    resposta = {"text":"Olá!"} #placeholder (como vai ser o formato das respostas?)
-    if not resposta:
+def promptAI( chat_id: int, item: str = Body()):
+    """
+        Chama função que manda prompt no chat, requer texto da mensagem e o id do chat. Retorna a lista atualizada de ChatMessageSchemas desse chat caso tenha sucesso.
+
+        Ex de uso: PUT http://127.0.0.1:8000/chat/prompt/4 (a mensagem é passada em json, como {"olá isso é um texto!"})
+
+        Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
+    """
+    #chama o service de llm para isso, obv
+    chat_messages = {"mensagens": [ChatMessageSchema(id=1, chat_id=1, author="llm", texto="Resolva isso:", timestamp="tempo", question_id=1), ChatMessageSchema(id=2, chat_id=1, author="user", texto="O que significa monocotiledônea?", timestamp="tempo2")]} #placeholder
+    if not chat_messages:
         raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
-    return resposta
+    return chat_messages

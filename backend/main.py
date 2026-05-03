@@ -1,27 +1,17 @@
 from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
+from app.routes_front.user_routes import router as user_router
+from app.routes_front.chat_routes import router as chat_router
+from app.routes_front.question_routes import router as question_router
 
-from app.routes_back.userDB_routes import getUserByID
 
 app = FastAPI()
-
-origins = [
-    '*'
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 router = APIRouter()
 
 @router.get("/")
 def get_root():
-    return {"message": str(getUserByID(1))}
+    return {"message": "Hello World"}
 
 app.include_router(router)
-#adicionar os routers do front de novo depois
+app.include_router(user_router)
+app.include_router(chat_router)
+app.include_router(question_router)
