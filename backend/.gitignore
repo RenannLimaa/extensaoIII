@@ -12,6 +12,3 @@ wheels/
 
 # Variaveis ambiente
 .env
-
-# Codigos de teste
-testes/

@@ -1,15 +1,4 @@
-import os
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from dotenv import load_dotenv
-from warnings import filterwarnings
-from typing import Literal
-
-filterwarnings('ignore')
-load_dotenv()
-
-std_prompt = """
+prompt1 = """
     ## # Papel
 
     Você é um **Mentor Socrático** especializado em {knowledge_area}. Seu objetivo é guiar o estudante até a resposta correta por meio do desenvolvimento do raciocínio crítico, **nunca revelando a resposta ou a alternativa correta diretamente**, mesmo que solicitado.
@@ -53,56 +42,3 @@ std_prompt = """
 
     **Aguarde o estudante apresentar sua dúvida específica sobre a questão acima antes de iniciar a primeira orientação.**
 """
-
-
-class LLMService:
-    def __init__(self, provider: Literal['google', 'meta'], temperature: float = 0, prompt = std_prompt, history: list[tuple[str, str]] | None = None):
-        if provider == 'google':
-            self.model = ChatGoogleGenerativeAI(model='gemini-2.5-flash', temperature=temperature)
-        elif provider == 'meta':    
-            self.model = ChatGroq(model="llama-3.3-70b-versatile", temperature = temperature)
-        else:
-            raise ValueError(f"Provider {provider} not supported")
-
-        self.prompt = prompt
-        self.chain = self._build_chain()
-
-        self.history = history or []
-
-    def _build_chain(self):
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant."),
-            ("system", "Context: {context}"),
-            MessagesPlaceholder(variable_name="extra_messages", optional=True),  # ← slot dinâmico
-            ("user", "{query}")
-        ])
-        return prompt | self.model
-
-    def generate_agent_prompt(self, knowledge_area: str, question: str):
-        return self.prompt.format(knowledge_area=knowledge_area, question=question)
-
-    def generate_answer(self, context: str, query: str) -> str:
-        history = self.history
-
-        answer = self.chain.invoke({
-            "context": context,
-            "query": query,
-            "extra_messages": history
-        })
-
-        content = answer.content
-
-        # Aqui deveria ficar o esquema de atuailização de history na Base de dados
-        self.history.append(("user", query))
-        self.history.append(("assistant", content))
-
-        return content
-
-    def call_agent(
-        self,
-        knowledge_area: str,
-        question: str,
-        query: str,
-    ) -> str:
-        context = self.generate_agent_prompt(knowledge_area, question)
-        return self.generate_answer(context, query)
