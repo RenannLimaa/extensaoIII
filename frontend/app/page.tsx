@@ -1,56 +1,58 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { AppHeader } from './components/home/AppHeader';
-import { BuildCard } from './components/home/BuildCard';
-import { SectionIntro } from './components/home/SectionIntro';
-import { SubjectCard } from './components/home/SubjectCard';
-import { homeContent } from './mocks/homeContent';
+import { Builds } from './components/home/Builds';
+import { FAQ } from './components/home/FAQ';
+import { Features } from './components/home/Features';
+import { FinalCTA } from './components/home/FinalCTA';
+import { Footer } from './components/home/Footer';
+import { Hero } from './components/home/Hero';
+import { LandingNav } from './components/home/LandingNav';
+import { LogosStrip } from './components/home/LogosStrip';
+import { SubjectsShowcase } from './components/home/SubjectsShowcase';
+import { Testimonials } from './components/home/Testimonials';
+import { Workflow } from './components/home/Workflow';
+import { CommandPalette } from './components/chat/CommandPalette';
+import { StudyPlanModal } from './components/chat/StudyPlanModal';
+import { useTheme } from './components/providers/ThemeProvider';
+import type { CommandActionId } from './lib/llm/llmClient';
 
 export default function HomePage() {
-  const [activeBuildId, setActiveBuildId] = useState(homeContent.buildSection.items[0]?.id ?? '');
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [studyPlanOpen, setStudyPlanOpen] = useState(false);
+  const { setTheme, theme } = useTheme();
+  const router = useRouter();
+
+  async function runCommand(id: CommandActionId) {
+    if (id === 'open-study-plan') {
+      setStudyPlanOpen(true);
+      return;
+    }
+    if (id === 'toggle-theme') {
+      setTheme(theme === 'light' ? 'dark' : 'light');
+      return;
+    }
+    // maioria das acoes IA so faz sentido dentro do chat — empurra o usuario pra la
+    router.push('/chat/matematica?build=teorico');
+  }
 
   return (
-    <div className="page-shell">
-      <AppHeader brand={homeContent.brand} />
+    <div className="landing">
+      <LandingNav onOpenCommand={() => setCmdOpen(true)} />
+      <Hero />
+      <LogosStrip />
+      <Features />
+      <Builds />
+      <SubjectsShowcase buildId="teorico" />
+      <Workflow />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
 
-      <main className="main-content container">
-        <section className="hero-block">
-          <h1 className="hero-title">
-            {homeContent.hero.titleTop}
-            <span>{homeContent.hero.titleHighlight}</span>
-          </h1>
-
-          <p className="hero-subtitle">{homeContent.hero.description}</p>
-        </section>
-
-        <section className="cards-section">
-          <SectionIntro
-            icon={homeContent.buildSection.icon}
-            title={homeContent.buildSection.title}
-            subtitle={homeContent.buildSection.subtitle}
-          />
-
-          <div className="build-grid">
-            {homeContent.buildSection.items.map((item) => (
-              <BuildCard
-                key={item.id}
-                item={item}
-                isActive={item.id === activeBuildId}
-                onSelect={setActiveBuildId}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="cards-section">
-          <div className="subject-grid">
-            {homeContent.subjectsSection.items.map((item) => (
-              <SubjectCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      </main>
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="global" />
+      <StudyPlanModal open={studyPlanOpen} onOpenChange={setStudyPlanOpen} />
     </div>
   );
 }
