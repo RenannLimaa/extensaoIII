@@ -4,7 +4,7 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from dotenv import load_dotenv
 from warnings import filterwarnings
-from typing import Literal, AsyncGenerator
+from typing import Literal
 
 filterwarnings('ignore')
 load_dotenv()
@@ -81,34 +81,28 @@ class LLMService:
     def generate_agent_prompt(self, knowledge_area: str, question: str):
         return self.prompt.format(knowledge_area=knowledge_area, question=question)
 
-    async def generate_answer(self, context: str, query: str) -> AsyncGenerator[str, None]:
+    def generate_answer(self, context: str, query: str) -> str:
         history = self.history
 
-        # Usamos astream para obter os tokens conforme são gerados
-        full_content = ""
-
-        async for chunk in self.chain.astream({
+        answer = self.chain.invoke({
             "context": context,
             "query": query,
             "extra_messages": history
-        }):
-            content = chunk.content
-            if content:
-                full_content += content
-                yield content  # Envia o token para o endpoint
+        })
+
+        content = answer.content
 
         # Aqui deveria ficar o esquema de atuailização de history na Base de dados
         self.history.append(("user", query))
-        self.history.append(("assistant", full_content))
+        self.history.append(("assistant", content))
 
-    async def call_agent(
+        return content
+
+    def call_agent(
         self,
         knowledge_area: str,
         question: str,
         query: str,
-    ) -> AsyncGenerator[str, None]:
+    ) -> str:
         context = self.generate_agent_prompt(knowledge_area, question)
-        
-        # Repassa o gerador assíncrono
-        async for token in self.generate_answer(context, query):
-            yield token
+        return self.generate_answer(context, query)
