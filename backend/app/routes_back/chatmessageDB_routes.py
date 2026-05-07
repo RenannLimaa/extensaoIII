@@ -70,6 +70,7 @@ def updateChatMessage(message: ChatMessageSchema):
     response = (
         supabase.table("ChatMessage")
         .update({"id":message.id, "chat_id": message.chat_id, "author": message.author, "texto": message.texto, "timestamp": message.timestamp, "question_id": message.question_id})
+        .eq("id", message.id)
         .execute()
     )
     rows = response.data
