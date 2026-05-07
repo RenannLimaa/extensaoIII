@@ -38,7 +38,7 @@ def getChatsByUser(user_id: int):
     Retorna todos os chats de um usuário em formato ChatSchema, dado o user_id.
     """
     response = (
-        supabase.table("User")
+        supabase.table("Chat")
         .select("*")
         .eq("user_id", user_id)
         .execute()
@@ -94,6 +94,7 @@ def updateChat(chat: ChatSchema):
     response = (
         supabase.table("Chat")
         .update({"user_id": chat.user_id, "habilidade": chat.habilidade, "chat_name": chat.chat_name, "criado_em": chat.criado_em, "atualizado_em": chat.atualizado_em})
+        .eq("id", chat.id)
         .execute()
     )
     rows = response.data
