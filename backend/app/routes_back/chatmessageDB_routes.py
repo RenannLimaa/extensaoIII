@@ -36,17 +36,24 @@ def getChatsMessagesByChat(chat_id: int):
     else:
         return None
 
-def createChatMessage(chat_id: int, author: str, texto: str, timestamp: str, question_id: int):
+def createChatMessage(chat_id: int, author: str, texto: str, question_id: int=0):
     """
-    Registra uma nova mensagem dado o id de chat, autor (system/user/llm), timestamp e id de questão, caso tenha uma questão associada.
+    Registra uma nova mensagem dado o id de chat, autor (system/user/llm) e id de questão, caso tenha uma questão associada.
 
     Retorna o ChatMessageSchema se obteve sucesso.
     """
-    response = (
-        supabase.table("ChatMessage")
-        .insert({"chat_id": chat_id, "author": author, "texto": texto, "timestamp": timestamp, "question_id": question_id})
-        .execute()
-    )
+    if question_id != 0:
+        response = (
+            supabase.table("ChatMessage")
+            .insert({"chat_id": chat_id, "author": author, "texto": texto, "question_id": question_id})
+            .execute()
+        )
+    else:
+        response = (
+            supabase.table("ChatMessage")
+            .insert({"chat_id": chat_id, "author": author, "texto": texto})
+            .execute()
+        )
     rows = response.data
     if rows:
         message = ChatMessageSchema(
@@ -54,7 +61,7 @@ def createChatMessage(chat_id: int, author: str, texto: str, timestamp: str, que
             chat_id=rows[0].get('chat_id'),
             author=rows[0].get('author'),
             texto=rows[0].get('texto'),
-            timestamp=rows[0].get('timestamp'),
+            timestamp=str(rows[0].get('timestamp')),
             question_id=rows[0].get('question_id')
         )
         return message

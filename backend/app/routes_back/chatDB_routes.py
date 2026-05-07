@@ -60,15 +60,15 @@ def getChatsByUser(user_id: int):
     else:
         return None
 
-def createChat(user_id: int, habilidade: int, chat_name: str, criado_em: str, atualizado_em: str):
+def createChat(user_id: int, habilidade: int, chat_name: str):
     """
-    Cria um chat novo dado o id de usuário, habilidade, nome do chat e os timestamps de criação e de atualização.
+    Cria um chat novo dado o id de usuário, habilidade e nome do chat
 
     Retorna um chat no formato ChatSchema se obteve sucesso.
     """
     response = (
         supabase.table("Chat")
-        .insert({"user_id": user_id, "habilidade": habilidade, "chat_name": chat_name, "criado_em": criado_em, "atualizado_em": atualizado_em})
+        .insert({"user_id": user_id, "habilidade": habilidade, "chat_name": chat_name})
         .execute()
     )
     rows = response.data
@@ -78,8 +78,8 @@ def createChat(user_id: int, habilidade: int, chat_name: str, criado_em: str, at
             user_id=rows[0].get('user_id'),
             habilidade=rows[0].get('habilidade'),
             chat_name=rows[0].get('chat_name'),
-            criado_em=rows[0].get('criado_em'),
-            atualizado_em=rows[0].get('atualizado_em'),
+            criado_em=str(rows[0].get('criado_em')),
+            atualizado_em=str(rows[0].get('atualizado_em')),
         )
         return chat
     else:
