@@ -8,7 +8,6 @@ class QuestionSchema(BaseModel):
     habilidade: int
     competencia: int
     enunciado: str = Field(max_length=2000)
-    image: str = Optional[str]
     alternativas: List[AlternativaSchema]
     image: Optional[str] = None
     alternativas: list[AlternativaSchema]
