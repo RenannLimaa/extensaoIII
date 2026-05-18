@@ -26,7 +26,7 @@ def getInteractionsByUser(user_id: int):
             interaction = InteractionSchema(
                 id=row.get('id'),
                 user_id=row.get('user_id'),
-                question=row.get('question'),
+                question_id=row.get('question_id'),
                 tempo_gasto=row.get('tempo_gasto'),
                 resposta_user=row.get('resposta_user'),
                 acertou=row.get('acertou'),
