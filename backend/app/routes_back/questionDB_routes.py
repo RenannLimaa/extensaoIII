@@ -28,11 +28,11 @@ def getQuestionByID(id: int):
 
         alternativas = (rows[0].get('alternativas'))
         alternativas_em_schemas = [
-            AlternativaSchema(letra="A", text=str(alternativas["A"])),
-            AlternativaSchema(letra="B", text=str(alternativas["B"])),
-            AlternativaSchema(letra="C", text=str(alternativas["C"])),
-            AlternativaSchema(letra="D", text=str(alternativas["D"])),
-            AlternativaSchema(letra="E", text=str(alternativas["E"]))
+            AlternativaSchema(letra="A", texto=str(alternativas["A"])),
+            AlternativaSchema(letra="B", texto=str(alternativas["B"])),
+            AlternativaSchema(letra="C", texto=str(alternativas["C"])),
+            AlternativaSchema(letra="D", texto=str(alternativas["D"])),
+            AlternativaSchema(letra="E", texto=str(alternativas["E"]))
         ]
 
         question = QuestionSchema(
