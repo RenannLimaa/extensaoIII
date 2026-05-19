@@ -4,15 +4,23 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SLASH_COMMANDS } from '../../lib/commandActions';
 import type { CommandActionId } from '../../lib/llm/llmClient';
+import { VoiceButton } from './VoiceButton';
 
 type Props = {
   disabled?: boolean;
   onSend: (text: string) => void;
-  /** quando o usuario dispara um comando slash, o parent roda via runCommand */
   onCommand: (id: CommandActionId) => void;
   placeholder?: string;
 };
 
+/**
+ * Composer simplificado - 2026 UX
+ *
+ * - Input de texto
+ * - 3 slash commands apenas (/proxima, /dica, /pular)
+ * - Voice button WhatsApp-style
+ * - Sem command palette complexa
+ */
 export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
@@ -23,7 +31,7 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
   const slashFiltered = useMemo(() => {
     if (!slashOpen) return [];
     const q = value.slice(1).toLowerCase();
-    return SLASH_COMMANDS.filter((c) => c.token.slice(1).toLowerCase().includes(q)).slice(0, 6);
+    return SLASH_COMMANDS.filter((c) => c.token.slice(1).toLowerCase().includes(q));
   }, [slashOpen, value]);
 
   useEffect(() => {
@@ -32,7 +40,7 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
 
   function resize(el: HTMLTextAreaElement) {
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 220) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
 
   function runSlash(action: CommandActionId) {
@@ -49,12 +57,14 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
     if (!el) return;
     const v = el.value.trim();
     if (!v) return;
-    // se for exatamente um slash conhecido → runCommand, senao → send
+
+    // Se for slash command conhecido
     const cmd = SLASH_COMMANDS.find((c) => c.token === v.toLowerCase());
     if (cmd) {
       runSlash(cmd.action);
       return;
     }
+
     onSend(v);
     el.value = '';
     setValue('');
@@ -63,6 +73,7 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
 
   return (
     <div className="composer-wrap">
+      {/* Slash menu */}
       <AnimatePresence>
         {slashFiltered.length > 0 && (
           <motion.div
@@ -70,7 +81,6 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.15 }}
           >
             {slashFiltered.map((c, idx) => (
               <div
@@ -79,28 +89,24 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
                 onMouseEnter={() => setSlashIndex(idx)}
                 onClick={() => runSlash(c.action)}
               >
-                <span className="ic" aria-hidden>
-                  {c.icon}
-                </span>
+                <span className="ic">{c.icon}</span>
                 <span className="text">
-                  <div className="title">{c.description}</div>
-                  <div className="desc">
-                    Digite <span className="cmd">{c.token}</span> e Enter
-                  </div>
+                  <span className="title">{c.description}</span>
+                  <span className="cmd">{c.token}</span>
                 </span>
-                <span className="kbd">↵</span>
               </div>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Input area */}
       <div className="composer">
         <textarea
           ref={ref}
           rows={1}
           className="composer-input"
-          placeholder={placeholder ?? 'Pergunte algo, digite "/" para comandos, Cmd+K para paleta…'}
+          placeholder={placeholder ?? 'Digite sua dúvida ou "/" para comandos...'}
           onChange={(e) => {
             setValue(e.currentTarget.value);
             resize(e.currentTarget);
@@ -137,36 +143,35 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
             }
           }}
         />
+
+        {/* Voice button - WhatsApp style */}
+        <VoiceButton
+          onTranscript={(text) => {
+            if (text.trim()) onSend(text.trim());
+          }}
+          disabled={disabled}
+        />
+
+        {/* Send button */}
         <button
           type="button"
           className="composer-btn"
           onClick={submit}
           disabled={disabled}
-          aria-label="Enviar mensagem"
+          aria-label="Enviar"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <line x1="12" y1="19" x2="12" y2="5" />
-            <polyline points="5 12 12 5 19 12" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2L11 13" />
+            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
           </svg>
         </button>
       </div>
 
+      {/* Hint simplificado */}
       <div className="composer-hint">
-        <span>
-          <span className="kbd">↵</span> enviar
-        </span>
+        <span><kbd>/</kbd> comandos</span>
         <span className="sep">·</span>
-        <span>
-          <span className="kbd">⇧</span>+<span className="kbd">↵</span> quebrar linha
-        </span>
-        <span className="sep">·</span>
-        <span>
-          <span className="kbd">/</span> comandos
-        </span>
-        <span className="sep">·</span>
-        <span>
-          <span className="kbd">⌘</span>+<span className="kbd">K</span> paleta
-        </span>
+        <span><kbd>Enter</kbd> enviar</span>
       </div>
     </div>
   );

@@ -39,16 +39,7 @@ export type ChatRole = 'user' | 'assistant' | 'system';
 
 export type SmartSuggestion = {
   id: string;
-  action:
-    | 'easier'
-    | 'harder'
-    | 'similar'
-    | 'summary'
-    | 'explain-simple'
-    | 'flashcards'
-    | 'next'
-    | 'hint'
-    | 'quiz-topic';
+  action: 'easier' | 'harder' | 'next' | 'hint';
   label: string;
   icon?: string;
 };

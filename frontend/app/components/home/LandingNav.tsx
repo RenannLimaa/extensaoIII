@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTheme } from '../providers/ThemeProvider';
 
-export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
+export function LandingNav() {
   const { theme, toggle } = useTheme();
 
   return (
@@ -32,18 +32,6 @@ export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
         </nav>
 
         <div className="landing-nav-actions">
-          <button
-            className="btn btn-ghost"
-            onClick={onOpenCommand}
-            aria-label="Abrir paleta de comandos"
-            title="Paleta (⌘K)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-            <span className="kbd">⌘K</span>
-          </button>
           <button className="btn btn-ghost" onClick={toggle} aria-label="Alternar tema">
             {theme === 'dark' ? (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -57,7 +45,7 @@ export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
             )}
           </button>
           <Link href="/chat/matematica?build=teorico" className="btn btn-primary">
-            Começar grátis →
+            Começar grátis
           </Link>
         </div>
       </div>
