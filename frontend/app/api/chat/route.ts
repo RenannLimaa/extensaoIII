@@ -118,7 +118,7 @@ async function callOpenAIWithModel(
     body: JSON.stringify({
       model,
       messages,
-      max_tokens: maxTokens,
+      max_completion_tokens: maxTokens,
       temperature: 0.7,
       response_format: { type: 'json_object' },
     }),
