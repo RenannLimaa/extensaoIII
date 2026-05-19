@@ -1,7 +1,7 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from dotenv import load_dotenv
 from warnings import filterwarnings
 from typing import Literal
@@ -56,7 +56,7 @@ std_prompt = """
 
 
 class LLMService:
-    def __init__(self, provider: Literal['google', 'meta'], temperature: float = 0, prompt = std_prompt):
+    def __init__(self, provider: Literal['google', 'meta'], temperature: float = 0, prompt = std_prompt, history: list[tuple[str, str]] | None = None):
         if provider == 'google':
             self.model = ChatGoogleGenerativeAI(model='gemini-2.5-flash', temperature=temperature)
         elif provider == 'meta':    
@@ -65,25 +65,44 @@ class LLMService:
             raise ValueError(f"Provider {provider} not supported")
 
         self.prompt = prompt
+        self.chain = self._build_chain()
 
-    def generate_agent_prompt(self, knowledge_area: str, question: str):
-        formatted_prompt = self.prompt.format(knowledge_area=knowledge_area, question=question)
-        return formatted_prompt
+        self.history = history or []
 
-    def generate_answer(self, context: str, query: str):
+    def _build_chain(self):
         prompt = ChatPromptTemplate.from_messages([
             ("system", "You are a helpful assistant."),
-            ("system", f"Context: {context}"),
+            ("system", "Context: {context}"),
+            MessagesPlaceholder(variable_name="extra_messages", optional=True),  # ← slot dinâmico
             ("user", "{query}")
         ])
+        return prompt | self.model
 
-        chain = prompt | self.model
+    def generate_agent_prompt(self, knowledge_area: str, question: str):
+        return self.prompt.format(knowledge_area=knowledge_area, question=question)
 
-        answer = chain.invoke({"context": context, "query": query})
-        return answer.content
+    def generate_answer(self, context: str, query: str) -> str:
+        history = self.history
 
-    def call_agent(self, knowledge_area: str, question: str, query: str):
+        answer = self.chain.invoke({
+            "context": context,
+            "query": query,
+            "extra_messages": history
+        })
+
+        content = answer.content
+
+        # Aqui deveria ficar o esquema de atuailização de history na Base de dados
+        self.history.append(("user", query))
+        self.history.append(("assistant", content))
+
+        return content
+
+    def call_agent(
+        self,
+        knowledge_area: str,
+        question: str,
+        query: str,
+    ) -> str:
         context = self.generate_agent_prompt(knowledge_area, question)
-        answer = self.generate_answer(context, query)
-
-        return answer
+        return self.generate_answer(context, query)
