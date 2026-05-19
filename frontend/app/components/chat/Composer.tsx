@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SLASH_COMMANDS } from '../../lib/commandActions';
 import type { CommandActionId } from '../../lib/llm/llmClient';
+import { PushToTalk } from './PushToTalk';
+import './JuicyAnimations.css';
 
 type Props = {
   disabled?: boolean;
@@ -11,9 +13,11 @@ type Props = {
   /** quando o usuario dispara um comando slash, o parent roda via runCommand */
   onCommand: (id: CommandActionId) => void;
   placeholder?: string;
+  /** habilita botao de voz push-to-talk */
+  enableVoice?: boolean;
 };
 
-export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
+export function Composer({ disabled, onSend, onCommand, placeholder, enableVoice = true }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
   const [slashIndex, setSlashIndex] = useState(0);
@@ -137,6 +141,17 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
             }
           }}
         />
+        {enableVoice && (
+          <PushToTalk
+            onTranscript={(text) => {
+              if (text.trim()) {
+                onSend(text.trim());
+              }
+            }}
+            disabled={disabled}
+            className="composer-ptt"
+          />
+        )}
         <button
           type="button"
           className="composer-btn"
@@ -167,6 +182,14 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
         <span>
           <span className="kbd">⌘</span>+<span className="kbd">K</span> paleta
         </span>
+        {enableVoice && (
+          <>
+            <span className="sep">·</span>
+            <span>
+              <span className="kbd">🎤</span> segure para falar
+            </span>
+          </>
+        )}
       </div>
     </div>
   );
