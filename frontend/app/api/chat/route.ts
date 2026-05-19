@@ -17,7 +17,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
+const MODEL_FALLBACK = process.env.OPENAI_MODEL_FALLBACK || 'gpt-5-nano';
 
 // System prompt do ENEMBot - tutor de ENEM gamificado
 const SYSTEM_PROMPT = `[IDENTIDADE]
@@ -103,6 +104,36 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+async function callOpenAIWithModel(
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  model: string,
+  maxTokens = 2000
+): Promise<string> {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error(`OpenAI API error (${model}):`, error);
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content ?? '{}';
+}
+
 async function callOpenAI(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   maxTokens = 2000
@@ -117,29 +148,18 @@ async function callOpenAI(
     });
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      max_tokens: maxTokens,
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('OpenAI API error:', error);
-    throw new Error(`OpenAI API error: ${response.status}`);
+  // Tenta modelo principal (gpt-5-mini), fallback para gpt-5-nano
+  try {
+    return await callOpenAIWithModel(messages, MODEL, maxTokens);
+  } catch (error) {
+    console.warn(`Modelo ${MODEL} falhou, tentando fallback ${MODEL_FALLBACK}...`);
+    try {
+      return await callOpenAIWithModel(messages, MODEL_FALLBACK, maxTokens);
+    } catch (fallbackError) {
+      console.error('Ambos modelos falharam:', fallbackError);
+      throw fallbackError;
+    }
   }
-
-  const data = await response.json();
-  return data.choices[0]?.message?.content ?? '{}';
 }
 
 function buildPromptForAction(action: ChatAction, payload: Record<string, unknown>): string {
