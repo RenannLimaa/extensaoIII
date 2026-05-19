@@ -1,4 +1,4 @@
-from app.routes_back.questionDB_routes import getQuestionByID
+from app.routes_back.questionDB_routes import getQuestionByID, getUnsolvedQuestion
 
 
 def teste_getQuestionByID(id = 1):
@@ -9,5 +9,6 @@ def teste_getQuestionByID(id = 1):
 # Testar
 
 if __name__ == "__main__":
-    teste_getQuestionByID()
+    user_id, habil, competencia = 1, 1, 1 
+    print(getUnsolvedQuestion(user_id, habil, competencia))
 
