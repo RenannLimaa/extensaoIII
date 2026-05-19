@@ -23,7 +23,18 @@ export function VoiceButton({ onTranscript, disabled = false }: VoiceButtonProps
   const [transcript, setTranscript] = useState('');
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stateRef = useRef<State>('idle');
+  const transcriptRef = useRef('');
+
+  // Keep refs in sync
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
 
   // Check support
   const isSupported = typeof window !== 'undefined' &&
@@ -36,18 +47,56 @@ export function VoiceButton({ onTranscript, disabled = false }: VoiceButtonProps
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
+  // Send transcript
+  const send = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    setState('processing');
+
+    // Small delay for final transcript
+    setTimeout(() => {
+      const finalTranscript = transcriptRef.current;
+      if (finalTranscript.trim()) {
+        onTranscript(finalTranscript.trim());
+      }
+      setState('idle');
+      setTranscript('');
+      setDuration(0);
+    }, 300);
+  }, [onTranscript]);
+
+  // Cancel recording
+  const cancel = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+    }
+
+    setState('idle');
+    setTranscript('');
+    setDuration(0);
+  }, []);
+
   // Start recording
   const start = useCallback(() => {
-    if (disabled || !isSupported || state === 'recording') return;
+    if (disabled || !isSupported || stateRef.current === 'recording') return;
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) return;
+    const recognition = new SpeechRecognitionAPI();
 
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'pt-BR';
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let text = '';
       for (let i = 0; i < event.results.length; i++) {
         text += event.results[i][0].transcript;
@@ -55,14 +104,13 @@ export function VoiceButton({ onTranscript, disabled = false }: VoiceButtonProps
       setTranscript(text);
     };
 
-    recognition.onerror = (event) => {
-      console.error('Speech error:', event.error);
+    recognition.onerror = () => {
       cancel();
     };
 
     recognition.onend = () => {
       // Only process if we were recording (not cancelled)
-      if (state === 'recording' && transcript) {
+      if (stateRef.current === 'recording' && transcriptRef.current) {
         send();
       }
     };
@@ -78,43 +126,7 @@ export function VoiceButton({ onTranscript, disabled = false }: VoiceButtonProps
     timerRef.current = setInterval(() => {
       setDuration(d => d + 1);
     }, 1000);
-  }, [disabled, isSupported, state, transcript]);
-
-  // Send recording
-  const send = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-
-    setState('processing');
-
-    // Small delay for final transcript
-    setTimeout(() => {
-      if (transcript.trim()) {
-        onTranscript(transcript.trim());
-      }
-      setState('idle');
-      setTranscript('');
-      setDuration(0);
-    }, 300);
-  }, [transcript, onTranscript]);
-
-  // Cancel recording
-  const cancel = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
-      recognitionRef.current = null;
-    }
-
-    setState('idle');
-    setTranscript('');
-    setDuration(0);
-  }, []);
+  }, [disabled, isSupported, cancel, send]);
 
   // Handle main button click
   const handleClick = () => {

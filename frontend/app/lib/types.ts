@@ -41,6 +41,7 @@ export type SmartSuggestion = {
   id: string;
   action: 'easier' | 'harder' | 'next' | 'hint';
   label: string;
+  icon?: string;
 };
 
 export type ChatMessage = {
