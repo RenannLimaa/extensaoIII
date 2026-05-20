@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.question import QuestionSchema
 from app.schemas.alternativa import AlternativaSchema
 from app.schemas.chatmessage import ChatMessageSchema
+from app.routes_back.questionDB_routes import getQuestionByID
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
@@ -12,10 +13,7 @@ def retrieveQuestionByID(id: int):
 
         Ex de uso: GET http://127.0.0.1:8000/chat/questions/3
     """
-    #pode chamar getQuestionByID em QuestionDB_routes
-    questions = {"questions": [QuestionSchema(id=id, enunciado="Quanto é 1+1?", habilidade=1, competencia=1, dificuldade=1, alternativas=[
-        AlternativaSchema(letra="A", texto="1"), AlternativaSchema(letra="B", texto="2"), AlternativaSchema(letra="C", texto="3"), AlternativaSchema(letra="D", texto="4"),AlternativaSchema(letra="E", texto="5")
-    ])]} #placeholder
+    questions = getQuestionByID(id)
     if not questions:
         raise HTTPException(status_code=500, detail="Não existe questão com esse id")
     return questions

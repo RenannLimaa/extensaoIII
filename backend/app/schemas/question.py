@@ -9,6 +9,6 @@ class QuestionSchema(BaseModel):
     competencia: int
     enunciado: str = Field(max_length=2000)
     alternativas: List[AlternativaSchema]
+    resposta_correta: str
     image: Optional[str] = None
-    alternativas: list[AlternativaSchema]
     dificuldade: int

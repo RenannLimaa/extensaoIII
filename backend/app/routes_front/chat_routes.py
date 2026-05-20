@@ -2,6 +2,12 @@ from fastapi import APIRouter, HTTPException, Body
 from app.schemas.user import UserSchema
 from app.schemas.chat import ChatSchema
 from app.schemas.chatmessage import ChatMessageSchema
+from app.routes_back.chatDB_routes import getChatsByUser
+from app.routes_back.chatDB_routes import createChat as createChatInDB
+from app.routes_back.chatDB_routes import getChatByID
+from app.routes_back.chatDB_routes import updateChat
+from app.routes_back.chatDB_routes import deleteChat as deleteChatInDB
+from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -12,9 +18,31 @@ def retrieveAllChats():
 
          Ex de uso: POST http://127.0.0.1:8000/chat/
     """
-    #chama getChatsByUser em chatDB_routes, usando o user_id ativo como argumento
-    chats = {"chats": [ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão1", criado_em="12-01-2026", atualizado_em="12-01-2026")]}  # placeholder
+    chats = getChatsByUser(4) #por enquanto usa o user 4 sempre
     return chats
+
+@router.get("/{chat_id}")
+def retrieveMessagesByChat(chat_id: int):
+    """
+            Retorna uma lista com todas as mensagens de um chat.
+
+            Ex de uso: GET http://127.0.0.1:8000/chat/5
+
+            Retorno:
+            [
+              {
+                "id": 6,
+                "chat_id": 5,
+                "author": "user",
+                "texto": "Que etapas eu devo seguir para resolver essa questão?",
+                "timestamp": "2026-05-19T23:15:10.791427",
+                "question_id": null
+              },
+              ...
+            ]
+        """
+    messages = getChatsMessagesByChat(chat_id)
+    return messages
 
 @router.post("/{habilidade_id}")
 def createChat(habilidade_id: int, item: str = Body()):
@@ -23,22 +51,24 @@ def createChat(habilidade_id: int, item: str = Body()):
 
         Ex de uso: POST http://127.0.0.1:8000/chat/2 (o nome é passada em json, como {"nome do chat"}
     """
-    #usa user_id ativo e pode chamar a função createChat em chatDB_routes diretamente eu acho, nem precisa de service
-    chat = ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão1", criado_em="tempo1", atualizado_em="tempo2") #placeholder
+    chat = createChatInDB(4, habilidade_id, item) #sempre cria no user 4 por enquanto
     if not chat:
         raise HTTPException(status_code=404, detail="Erro ao criar chat")
     return chat
 
-@router.post("/{chat_id}")
+@router.post("/update/{chat_id}")
 def updateChatName(chat_id: int, chat_name: str = Body()):
     """
         Chama função que atualiza nome do chat, dado o id dele e o nome novo. Retorna mensagem de sucesso ou falha.
 
-        Ex de uso: POST http://127.0.0.1:8000/chat/4 (o nome é passada em json, como {"nome novo!"}
+        Ex de uso: POST http://127.0.0.1:8000/chat/update/4 (o nome é passada em json, como {"nome novo!"}
     """
-    #usa user_id ativo para conseguir seus chats, procura aquele com o chat_id certo, recupera o ChatSchema completo dele, muda o nome e atualiza no db
-    chat = ChatSchema(id=1, user_id=1, habilidade=1, chat_name="revisão2") #placeholder
-    if not chat:
+    chat_original = getChatByID(chat_id)
+    if not chat_original:
+        raise HTTPException(status_code=404, detail="Erro ao atualizar chat")
+    chat = ChatSchema(id = chat_id, user_id=chat_original.user_id, habilidade=chat_original.habilidade, chat_name=chat_name, criado_em=chat_original.criado_em, atualizado_em=chat_original.atualizado_em)
+    chat_final = updateChat(chat)
+    if not chat_final:
         raise HTTPException(status_code=404, detail="Erro ao atualizar chat")
     return {"message": "Chat atualizado com sucesso!"}
 
@@ -51,7 +81,7 @@ def deleteChat(chat_id: int):
 
         Retorno: {"message":"Chat 2 apagado com sucesso"}
     """
-    apagado = True #placeholder
+    apagado = deleteChatInDB(chat_id)
     if not apagado:
         raise HTTPException(status_code=404, detail="Nenhum chat com esse id foi achado")
     return {"message":f"Chat {chat_id} apagado com sucesso"}
