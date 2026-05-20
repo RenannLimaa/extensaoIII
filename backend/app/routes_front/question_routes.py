@@ -3,6 +3,9 @@ from app.schemas.question import QuestionSchema
 from app.schemas.alternativa import AlternativaSchema
 from app.schemas.chatmessage import ChatMessageSchema
 from app.routes_back.questionDB_routes import getQuestionByID
+import random
+from app.routes_back.chatmessageDB_routes import createChatMessage
+from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
@@ -18,17 +21,22 @@ def retrieveQuestionByID(id: int):
         raise HTTPException(status_code=500, detail="Não existe questão com esse id")
     return questions
 
-@router.get("/")
-def randomQuestion():
+@router.get("/random/{chat_id}")
+def randomQuestion(chat_id: int):
     """
-        Faz o bot "mandar uma mensagem" contendo uma questão nova aleatória. Retorna uma lista de ChatMessagesSchemas da conversa inteira.
+        Faz o bot "mandar uma mensagem" contendo uma questão nova aleatória, dado o id do chat. Retorna uma lista de ChatMessagesSchemas da conversa inteira.
 
-        Ex de uso: GET http://127.0.0.1:8000/questions/
+        Ex de uso: GET http://127.0.0.1:8000/questions/random/5
 
         Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
     """
-    #chama o service para isso
-    chat_messages = {"mensagens": [ChatMessageSchema(id=1, chat_id=1, author="llm", texto="Resolva isso:", timestamp="tempo", question_id=1), ChatMessageSchema(id=2, chat_id=1, author="user", texto="O que significa monocotiledônea?", timestamp="tempo2")]} #placeholder
-    if not chat_messages:
-        raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
+    id_aleatorio = random.randint(1, 7)
+    question = getQuestionByID(id_aleatorio)
+    if not question:
+        raise HTTPException(status_code=500, detail="Algum problema ocorreu ao escolher a questão")
+    question_text = question.enunciado + "\n"
+    for alt in question.alternativas:
+        question_text += "\n" + str(alt.letra) + ") " + str(alt.texto)
+    createChatMessage(chat_id, "llm", question_text, id_aleatorio)
+    chat_messages = getChatsMessagesByChat(chat_id)
     return chat_messages

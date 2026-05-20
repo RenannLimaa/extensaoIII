@@ -8,6 +8,8 @@ from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.chatDB_routes import updateChat
 from app.routes_back.chatDB_routes import deleteChat as deleteChatInDB
 from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
+from app.routes_back.chatmessageDB_routes import createChatMessage
+from app.routes_back.llm_routes import getAnswertheQuery
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -36,7 +38,7 @@ def retrieveMessagesByChat(chat_id: int):
                 "author": "user",
                 "texto": "Que etapas eu devo seguir para resolver essa questão?",
                 "timestamp": "2026-05-19T23:15:10.791427",
-                "question_id": null
+                "question_id": 2
               },
               ...
             ]
@@ -86,17 +88,19 @@ def deleteChat(chat_id: int):
         raise HTTPException(status_code=404, detail="Nenhum chat com esse id foi achado")
     return {"message":f"Chat {chat_id} apagado com sucesso"}
 
-@router.put("/prompt/{chat_id}")
-def promptAI( chat_id: int, item: str = Body()):
+@router.put("/prompt/{chat_id}/{question_id}/{texto}")
+def promptAI(chat_id: int, question_id: int, texto: str):
     """
-        Chama função que manda prompt no chat, requer texto da mensagem e o id do chat. Retorna a lista atualizada de ChatMessageSchemas desse chat caso tenha sucesso.
+        Chama função que manda prompt no chat, requer id do chat, da questão e texto. Retorna a lista atualizada de ChatMessageSchemas desse chat caso tenha sucesso.
 
-        Ex de uso: PUT http://127.0.0.1:8000/chat/prompt/4 (a mensagem é passada em json, como {"olá isso é um texto!"})
+        Ex de uso: PUT http://127.0.0.1:8000/chat/prompt/4/34/Olá
 
         Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
     """
-    #chama o service de llm para isso, obv
-    chat_messages = {"mensagens": [ChatMessageSchema(id=1, chat_id=1, author="llm", texto="Resolva isso:", timestamp="tempo", question_id=1), ChatMessageSchema(id=2, chat_id=1, author="user", texto="O que significa monocotiledônea?", timestamp="tempo2")]} #placeholder
-    if not chat_messages:
+    resposta = getAnswertheQuery(chat_id, question_id, texto)
+    if not resposta:
         raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
+    createChatMessage(chat_id, "user", texto, question_id)
+    createChatMessage(chat_id, "llm", resposta, question_id)
+    chat_messages = getChatsMessagesByChat(chat_id)
     return chat_messages
