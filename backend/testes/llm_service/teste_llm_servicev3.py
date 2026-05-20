@@ -1,4 +1,4 @@
-from app.services.llm_service import LLMService
+from testes.backups.llm_services.llm_servicev3 import LLMService
 
 from testes.llm_service.prompts import prompt1 as prompt
 from testes.llm_service.questions import question2 as question

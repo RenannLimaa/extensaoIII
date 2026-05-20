@@ -101,3 +101,37 @@ def deleteChatMessage(id: int):
         return True
     else:
         return False
+
+def getMessagesRelatedToQuestion(chat_id: int, question_id: int) -> tuple[ChatMessageSchema, list[ChatMessageSchema]]:
+    """
+        Retorna os chat_messages de um chat considerando apenas o id de uma questão
+    """
+    response = supabase.table("ChatMessage") \
+        .select("*") \
+        .eq("chat_id", chat_id) \
+        .eq("question_id", question_id) \
+        .order("timestamp", desc=True) \
+        .execute()
+
+    rows = response.data
+    if not rows:
+        return None, []
+
+    messages = []
+    for row in rows:
+        message = ChatMessageSchema(
+            id=row.get('id'),
+            chat_id=row.get('chat_id'),
+            author=row.get('author'),
+            texto=row.get('texto'),
+            timestamp=row.get('timestamp'),
+            question_id=row.get('question_id')
+        )
+        messages.append(message)
+
+    messages = list(reversed(messages))  # ordem cronológica
+
+    question_message = messages[0]       # primeiro = texto da questão
+    history_messages = messages[1:]      # restante = histórico normal
+
+    return question_message, history_messages
