@@ -44,8 +44,14 @@ type BackendChatMessage = {
   question_id?: number | null;
 };
 
-const DEFAULT_CHAT_ID = 1;
+const DEFAULT_CHAT_ID = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAT_ID ?? 1);
 const VALID_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
+const PROMPTS = {
+  answer: (questionId: string, chosen: string) =>
+    `Resposta da questão ${questionId}: alternativa ${chosen}. Explique se está correta.`,
+  command: (actionId: string, questionId?: string) =>
+    `Comando ${actionId}${questionId ? ` para questão ${questionId}` : ''}.`,
+};
 
 const fallbackBySkill: Record<number, SubjectId> = {
   1: 'matematica',
@@ -171,7 +177,7 @@ export const backendLlmClient: LlmClient = {
     try {
       const messages = await sendPrompt(
         DEFAULT_CHAT_ID,
-        `Resposta da questão ${question.id}: alternativa ${chosen}. Explique se está correta.`,
+        PROMPTS.answer(question.id, chosen),
       );
       const reply =
         messages
@@ -260,7 +266,7 @@ export const backendLlmClient: LlmClient = {
     if (actionId === 'open-study-plan') return { openModal: 'study-plan' };
     if (actionId === 'toggle-theme') return { sideEffect: { type: 'theme', value: 'dark' } };
 
-    const userText = `Comando ${actionId}${context?.question ? ` para questão ${context.question.id}` : ''}.`;
+    const userText = PROMPTS.command(actionId, context?.question?.id);
     return { reply: await getPromptReply(userText) };
   },
 };
