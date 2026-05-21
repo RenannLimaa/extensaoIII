@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { SUBJECTS } from '../../lib/catalog';
+import { formatRecentLabel, listRecentSessions, totalAnsweredInRecentSessions } from '../../lib/sessionStore';
 import type { SubjectId } from '../../lib/types';
 import { useTheme } from '../providers/ThemeProvider';
 
@@ -19,21 +21,23 @@ type Props = {
   onOpenCommand: () => void;
 };
 
-/**
- * Lista mockada de sessoes passadas (drag-to-reorder fica para v2 — o layout
- * ja tolera quando for adicionado).
- */
-const MOCK_SESSIONS: SessionEntry[] = [
-  { id: 's1', subjectId: 'matematica', title: 'Funções afim e quadrática', whenLabel: 'Hoje', accuracy: 72 },
-  { id: 's2', subjectId: 'linguagens', title: 'Interpretação — poesia moderna', whenLabel: 'Ontem', accuracy: 85 },
-  { id: 's3', subjectId: 'natureza', title: 'Cinemática — MRUV', whenLabel: '2 dias', accuracy: 40 },
-  { id: 's4', subjectId: 'humanas', title: 'República Velha', whenLabel: '3 dias', accuracy: 66 },
-  { id: 's5', subjectId: 'redacao', title: 'Proposta de intervenção', whenLabel: '5 dias', accuracy: 88 },
-];
-
 export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Props) {
   const { theme, toggle } = useTheme();
   const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
+  const [sessions, setSessions] = useState<SessionEntry[]>([]);
+  const [flashcardsCount, setFlashcardsCount] = useState(0);
+
+  useEffect(() => {
+    const recent = listRecentSessions(6).map((session) => ({
+      id: session.id,
+      subjectId: session.subjectId,
+      title: session.title,
+      whenLabel: formatRecentLabel(session.updatedAt),
+      accuracy: session.accuracy,
+    }));
+    setSessions(recent);
+    setFlashcardsCount(totalAnsweredInRecentSessions());
+  }, [activeSubjectId, buildId]);
 
   return (
     <aside className="ws-sidebar" aria-label="Navegação da workspace">
@@ -87,7 +91,7 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
             🗂️
           </span>
           <span>Flashcards</span>
-          <span className="count">12</span>
+          <span className="count">{flashcardsCount}</span>
         </Link>
         <div className="ws-nav-item">
           <span className="emoji" aria-hidden>
@@ -101,8 +105,16 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         Sessões recentes
       </div>
       <div className="ws-sessions">
-        {MOCK_SESSIONS.map((s, i) => (
-          <div key={s.id} className={`ws-session ${i === 0 ? 'is-active' : ''}`}>
+        {sessions.length === 0 && (
+          <div className="ws-session" style={{ opacity: 0.8 }}>
+            <div className="title">Nenhuma sessão concluída ainda</div>
+            <div className="meta">
+              <span>Resolva questões para preencher seu histórico</span>
+            </div>
+          </div>
+        )}
+        {sessions.map((s) => (
+          <div key={s.id} className={`ws-session ${s.subjectId === activeSubjectId ? 'is-active' : ''}`}>
             <div className="title">
               <span aria-hidden>{SUBJECTS.find((x) => x.id === s.subjectId)?.icon}</span>
               {s.title}
