@@ -107,7 +107,7 @@ async function fetchQuestionById(questionId: number, subjectId: SubjectId): Prom
   const payload = await apiRequest<{ questions: BackendQuestion[] }>(`/questions/${questionId}`);
   const raw = payload.questions?.[0];
   if (!raw) {
-    throw new Error(`Questão ${questionId} não encontrada no backend.`);
+    throw new Error(`Questão ${questionId} indisponível. Verifique se o backend está respondendo /questions/{id}.`);
   }
   return {
     id: String(raw.id),
@@ -169,7 +169,7 @@ export const backendLlmClient: LlmClient = {
   async startSession({ subjectId }: StartSessionInput): Promise<StartSessionOutput> {
     const { intro, question } = await fetchLatestPromptQuestion(subjectId);
     if (!question) {
-      throw new Error('Backend não retornou questão inicial.');
+      throw new Error('Backend não retornou questão inicial. Tente novamente em instantes.');
     }
     return { greeting: intro, firstQuestion: question };
   },
