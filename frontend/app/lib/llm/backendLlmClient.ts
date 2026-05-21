@@ -37,22 +37,39 @@ type BackendChatMessage = {
 };
 
 const BACKEND_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000').replace(/\/+$/, '');
+const ESTIMATED_MINUTES_PER_QUESTION = 2;
+const MAX_DUPLICATE_QUESTION_RETRY_ATTEMPTS = 3;
+const DEFAULT_SUBJECT_ID: SubjectId = 'matematica';
+const SUBJECT_SKILL_MAP: Record<SubjectId, number> = {
+  matematica: 1,
+  linguagens: 2,
+  natureza: 3,
+  humanas: 4,
+  redacao: 5,
+};
+
+if (
+  typeof window !== 'undefined' &&
+  process.env.NODE_ENV === 'production' &&
+  BACKEND_BASE_URL.startsWith('http://') &&
+  !BACKEND_BASE_URL.includes('localhost') &&
+  !BACKEND_BASE_URL.includes('127.0.0.1')
+) {
+  console.warn(`NEXT_PUBLIC_BACKEND_URL should use HTTPS in production: ${BACKEND_BASE_URL}`);
+}
 
 let activeChatId: number | null = null;
 
+function encodeRawStringBody(value: string): string {
+  /**
+   * O backend atual usa Body() tipado como string em algumas rotas.
+   * Por isso enviamos um JSON string literal (e não objeto).
+   */
+  return JSON.stringify(value);
+}
+
 function subjectToSkillId(subjectId: SubjectId): number {
-  switch (subjectId) {
-    case 'matematica':
-      return 1;
-    case 'linguagens':
-      return 2;
-    case 'natureza':
-      return 3;
-    case 'humanas':
-      return 4;
-    case 'redacao':
-      return 5;
-  }
+  return SUBJECT_SKILL_MAP[subjectId];
 }
 
 function toAlternativeLetter(value: string): AlternativeLetter {
@@ -68,13 +85,14 @@ function toDifficulty(value?: number): Difficulty {
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method ?? 'GET').toUpperCase();
   const res = await fetch(`${BACKEND_BASE_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
       ...(init?.headers ?? {}),
     },
-    cache: 'no-store',
+    cache: init?.cache ?? (method === 'GET' ? 'default' : 'no-store'),
   });
 
   if (!res.ok) {
@@ -85,7 +103,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       detail = '';
     }
-    throw new Error(`Erro na API (${res.status})${detail}`);
+    throw new Error(`Erro na API [${method} ${path}] (${res.status})${detail}`);
   }
 
   return (await res.json()) as T;
@@ -125,7 +143,7 @@ async function ensureChat(subjectId: SubjectId): Promise<number> {
 
   const chat = await requestJson<{ id?: number }>(`/chat/${subjectToSkillId(subjectId)}`, {
     method: 'POST',
-    body: JSON.stringify(`Sessão ${findSubject(subjectId)?.title ?? subjectId}`),
+    body: encodeRawStringBody(`Sessão ${findSubject(subjectId)?.title ?? subjectId}`),
   });
   if (!chat.id) throw new Error('Não foi possível iniciar o chat no backend.');
   activeChatId = chat.id;
@@ -193,11 +211,12 @@ export const backendLlmClient: LlmClient = {
 
     const payload = await requestJson<unknown>(`/chat/prompt/${activeChatId}`, {
       method: 'PUT',
-      body: JSON.stringify(prompt),
+      body: encodeRawStringBody(prompt),
     });
     const messages = getMessages(payload);
     const reply = getLastAssistantText(messages) ?? 'Resposta enviada ao backend com sucesso.';
-    const correta = /\b(correta|correto|acertou|certa)\b/i.test(reply) && !/\b(incorreta|incorreto|errou|errada)\b/i.test(reply);
+    const expected = question.alternativas.find((alternative) => alternative.correta)?.letra;
+    const correta = expected ? expected === chosen : false;
 
     return {
       feedback: reply,
@@ -208,22 +227,29 @@ export const backendLlmClient: LlmClient = {
   },
 
   async nextQuestion({ subjectId, alreadyAskedIds }: NextQuestionInput): Promise<NextQuestionOutput> {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    let lastAttemptedQuestion: ReturnType<typeof mapQuestion> | null = null;
+    for (let attempt = 0; attempt < MAX_DUPLICATE_QUESTION_RETRY_ATTEMPTS; attempt++) {
       const { intro, question } = await loadQuestionFromBackend();
       if (!question) return { intro, question: null };
       const mapped = mapQuestion(question, subjectId);
-      if (!alreadyAskedIds.includes(mapped.id) || attempt === 2) {
+      if (!alreadyAskedIds.includes(mapped.id)) {
         return { intro, question: mapped };
       }
+      lastAttemptedQuestion = mapped;
     }
-    return { intro: 'Não foi possível obter uma nova questão.', question: null };
+    return {
+      intro: lastAttemptedQuestion
+        ? 'O backend retornou apenas questões já exibidas nesta sessão.'
+        : 'Não foi possível obter uma nova questão.',
+      question: null,
+    };
   },
 
   async freeReply({ userMessage, subjectId }: FreeReplyInput): Promise<FreeReplyOutput> {
     const chatId = await ensureChat(subjectId);
     const payload = await requestJson<unknown>(`/chat/prompt/${chatId}`, {
       method: 'PUT',
-      body: JSON.stringify(userMessage),
+      body: encodeRawStringBody(userMessage),
     });
     const messages = getMessages(payload);
     return {
@@ -245,7 +271,7 @@ export const backendLlmClient: LlmClient = {
   async buildStudyPlan({ goal, minutesPerDay = 60, days = 7 }: StudyPlanInput): Promise<StudyPlanOutput> {
     const response = await this.freeReply({
       userMessage: `Monte um plano de estudos para ${days} dias, ${minutesPerDay} minutos por dia. Objetivo: ${goal}`,
-      subjectId: 'matematica',
+      subjectId: DEFAULT_SUBJECT_ID,
     });
     return {
       title: 'Plano de estudos',
@@ -259,7 +285,7 @@ export const backendLlmClient: LlmClient = {
     return {
       accuracy,
       streak: stats.streak ?? 0,
-      timeMinutes: Math.max(1, stats.answered * 2),
+      timeMinutes: Math.max(1, stats.answered * ESTIMATED_MINUTES_PER_QUESTION),
       strongTopics: [],
       weakTopics: [],
       nextAction:
@@ -287,7 +313,7 @@ export const backendLlmClient: LlmClient = {
 
     const response = await this.freeReply({
       userMessage: `Execute o comando ${actionId}.`,
-      subjectId: context?.subjectId ?? 'matematica',
+      subjectId: context?.subjectId ?? DEFAULT_SUBJECT_ID,
       lastQuestion: context?.question,
       build: context?.build,
     });
