@@ -1,5 +1,7 @@
 from testes.backups.llm_service import LLMService
-from routes_back.chatmessageDB_routes import getMessagesRelatedToQuestion
+from testes.llm_service.prompts import prompt2 as prompt
+from app.routes_back.chatmessageDB_routes import getMessagesRelatedToQuestion
+
 
 def getAnswertheQuery(chat_id: int, question_id: int, knowledge_area, query):
     """
@@ -19,6 +21,7 @@ def getAnswertheQuery(chat_id: int, question_id: int, knowledge_area, query):
     llm_service = LLMService(
         'google',
         0,
+#     prompt=prompt,
         history=history
     )
 
