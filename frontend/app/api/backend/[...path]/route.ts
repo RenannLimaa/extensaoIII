@@ -5,8 +5,7 @@ const backendBaseUrl = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 async function proxy(req: NextRequest, path: string[]) {
   try {
     const normalizedBackendBaseUrl = backendBaseUrl.replace(/\/+$/, '') + '/';
-    const safePath = path.map((part) => encodeURIComponent(part)).join('/');
-    const url = new URL(safePath, normalizedBackendBaseUrl);
+    const url = new URL(path.join('/'), normalizedBackendBaseUrl);
     url.search = req.nextUrl.search;
 
     const method = req.method;
