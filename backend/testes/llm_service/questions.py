@@ -20,3 +20,12 @@ c) amplia o processo de ocupação humana.
 d) aumenta o número de indivíduos nas populações.
 e) favorece a formação de ilhas de proteção integral.
 """
+
+question3 = """    
+            Um banho propicia ao indivíduo um momento de conforto e reenergização. Porém, o desperdício de água gera prejuízo para todos. Considere que cada uma das cinco pessoas de uma família toma dois banhos por dia, de 15 minutos cada. Sabe-se que a cada hora de banho são gastos aproximadamente 540 litros de água. Considerando que um mês tem 30 dias, podemos perceber que o consumo de água é bem significativo. A quantidade total de litros de água consumida, nos banhos dessa família, durante um mês, é mais próxima de:
+            A) 1 350.
+            B) 2 700.
+            C) 20 250.
+            D) 20 520.
+            E) 40 500. 
+"""

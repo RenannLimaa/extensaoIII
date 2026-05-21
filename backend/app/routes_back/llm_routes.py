@@ -7,6 +7,9 @@ def getAnswertheQuery(chat_id: int, question_id: int, knowledge_area, query):
     """
         Dado um chat, uma questão, uma área de conhecimento e uma query, retorna a resposta da LLM
         considerando a questão, o histórico de mensagens relacionados à questão e a consulta do usuário.
+
+        Observação: O prompt a ser utilizado deverá depender se o usuário já respondeu ou não a questão.
+        prompt1 se sim, prompt2 se não
     """
 
     question_message, history_messages = getMessagesRelatedToQuestion(chat_id, question_id)
