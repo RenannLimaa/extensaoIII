@@ -44,6 +44,9 @@ type BackendChatMessage = {
   question_id?: number | null;
 };
 
+const DEFAULT_CHAT_ID = 1;
+const VALID_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
+
 const fallbackBySkill: Record<number, SubjectId> = {
   1: 'matematica',
   2: 'linguagens',
@@ -66,6 +69,14 @@ function subjectBySkill(skill: number | undefined, fallback: SubjectId): Subject
 function parseErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return 'Erro inesperado ao processar resposta do backend.';
+}
+
+function toLetter(value: string): Question['alternativas'][number]['letra'] {
+  const upper = value.toUpperCase();
+  if (VALID_LETTERS.includes(upper as (typeof VALID_LETTERS)[number])) {
+    return upper as Question['alternativas'][number]['letra'];
+  }
+  return 'A';
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
@@ -98,7 +109,7 @@ async function fetchQuestionById(questionId: number, subjectId: SubjectId): Prom
     dificuldade: difficultyToUi(raw.dificuldade),
     enunciado: raw.enunciado,
     alternativas: raw.alternativas.map((a) => ({
-      letra: (a.letra.toUpperCase() as Question['alternativas'][number]['letra']),
+      letra: toLetter(a.letra),
       texto: a.texto,
       correta: Boolean(a.correta),
       feedback: a.feedback,
@@ -134,7 +145,7 @@ async function sendPrompt(chatId: number, text: string): Promise<BackendChatMess
 
 async function getPromptReply(userMessage: string): Promise<string> {
   try {
-    const messages = await sendPrompt(1, userMessage);
+    const messages = await sendPrompt(DEFAULT_CHAT_ID, userMessage);
     return (
       messages
         .filter((m) => m.author.toLowerCase() === 'llm')
@@ -158,7 +169,10 @@ export const backendLlmClient: LlmClient = {
 
   async answerQuestion({ question, chosen }: AnswerInput): Promise<AnswerOutput> {
     try {
-      const messages = await sendPrompt(1, `Resposta da questão ${question.id}: alternativa ${chosen}. Explique se está correta.`);
+      const messages = await sendPrompt(
+        DEFAULT_CHAT_ID,
+        `Resposta da questão ${question.id}: alternativa ${chosen}. Explique se está correta.`,
+      );
       const reply =
         messages
           .filter((m) => m.author.toLowerCase() === 'llm')
