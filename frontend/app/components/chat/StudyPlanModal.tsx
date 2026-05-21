@@ -96,8 +96,7 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
                     </label>
                   </div>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                    No protótipo, o plano é gerado com lógica mock baseada em palavras-chave no objetivo. Com a IA plugada,
-                    ele considera seu histórico de acertos.
+                    O plano é gerado pela integração atual com o backend da aplicação.
                   </p>
                 </div>
               ) : (
