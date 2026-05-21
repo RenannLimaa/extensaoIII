@@ -31,6 +31,11 @@ function mid() {
   return `m_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return 'Não foi possível concluir a requisição.';
+}
+
 type PageProps = {
   params: Promise<{ subjectId: string }>;
 };
@@ -98,6 +103,15 @@ export default function ChatPage({ params }: PageProps) {
         setMessages([greeting, questionMsg]);
         setCurrentQuestion(res.firstQuestion);
         setAskedIds([res.firstQuestion.id]);
+      } catch (error) {
+        setMessages([
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao iniciar sessão: ${toErrorMessage(error)}`,
+            createdAt: Date.now(),
+          },
+        ]);
       } finally {
         setTyping(false);
       }
@@ -134,6 +148,16 @@ export default function ChatPage({ params }: PageProps) {
           answered: s.answered + 1,
           correct: s.correct + (ans.correta ? 1 : 0),
         }));
+      } catch (error) {
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao validar resposta: ${toErrorMessage(error)}`,
+            createdAt: Date.now(),
+          },
+        ]);
       } finally {
         setTyping(false);
       }
@@ -172,6 +196,16 @@ export default function ChatPage({ params }: PageProps) {
         ]);
         setCurrentQuestion(nxt.question);
         setAskedIds((ids) => [...ids, nxt.question!.id]);
+      } catch (error) {
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao buscar próxima questão: ${toErrorMessage(error)}`,
+            createdAt: Date.now(),
+          },
+        ]);
       } finally {
         setTyping(false);
       }
@@ -220,6 +254,16 @@ export default function ChatPage({ params }: PageProps) {
             ]);
           }
         }
+      } catch (error) {
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao executar comando: ${toErrorMessage(error)}`,
+            createdAt: Date.now(),
+          },
+        ]);
       } finally {
         setTyping(false);
       }
@@ -292,6 +336,16 @@ export default function ChatPage({ params }: PageProps) {
             createdAt: Date.now(),
           },
         ]);
+      } catch (error) {
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao enviar mensagem: ${toErrorMessage(error)}`,
+            createdAt: Date.now(),
+          },
+        ]);
       } finally {
         setTyping(false);
       }
@@ -311,6 +365,16 @@ export default function ChatPage({ params }: PageProps) {
             id: mid(),
             role: 'assistant',
             content: `**${res.title}**\n\n${res.body}`,
+            createdAt: Date.now(),
+          },
+        ]);
+      } catch (error) {
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: mid(),
+            role: 'assistant',
+            content: `Erro ao processar destaque: ${toErrorMessage(error)}`,
             createdAt: Date.now(),
           },
         ]);
