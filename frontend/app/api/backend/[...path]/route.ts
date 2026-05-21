@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const backendBaseUrl = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
-const normalizedBackendBaseUrl = backendBaseUrl.replace(/\/+$/, '') + '/';
 
 async function proxy(req: NextRequest, path: string[]) {
   try {
+    const normalizedBackendBaseUrl = backendBaseUrl.replace(/\/+$/, '') + '/';
     const url = new URL(path.join('/'), normalizedBackendBaseUrl);
     url.search = req.nextUrl.search;
 
@@ -31,7 +31,7 @@ async function proxy(req: NextRequest, path: string[]) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Falha de conexão com o backend';
     return NextResponse.json(
-      { detail: `Erro ao chamar backend (${backendBaseUrl}): ${message}` },
+      { detail: `Erro ao chamar backend: ${message}` },
       { status: 502 },
     );
   }

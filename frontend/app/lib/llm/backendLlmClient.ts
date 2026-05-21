@@ -44,8 +44,7 @@ type BackendChatMessage = {
   question_id?: number | null;
 };
 
-const parsedDefaultChatId = Number.parseInt(process.env.NEXT_PUBLIC_DEFAULT_CHAT_ID ?? '1', 10);
-const DEFAULT_CHAT_ID = Number.isNaN(parsedDefaultChatId) ? 1 : parsedDefaultChatId;
+const DEFAULT_CHAT_ID = 1;
 const VALID_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 const PROMPTS = {
   answer: (questionId: string, chosen: string) =>
