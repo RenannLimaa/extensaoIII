@@ -42,6 +42,7 @@ def getQuestionByID(id: int):
             enunciado=rows[0].get('enunciado'),
             image=image,
             alternativas=alternativas_em_schemas,
+            resposta_correta=rows[0].get('resposta_correta'),
             dificuldade=rows[0].get('dificuldade')
         )
         return question

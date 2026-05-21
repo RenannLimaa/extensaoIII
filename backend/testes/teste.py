@@ -1,8 +1,8 @@
 # from app.essential_imports import *
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from app.services.llm_service import LLMService
-from testes.llm_service.questions import question2 as question
+from backend.app.services.llm_service import LLMService
+from backend.testes.llm_service.questions import question2 as question
 
 import asyncio
 
