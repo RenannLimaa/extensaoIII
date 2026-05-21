@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const backendBaseUrl = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
+
+async function proxy(req: NextRequest, path: string[]) {
+  try {
+    const normalizedBackendBaseUrl = backendBaseUrl.replace(/\/+$/, '') + '/';
+    const url = new URL(path.join('/'), normalizedBackendBaseUrl);
+    url.search = req.nextUrl.search;
+
+    const method = req.method;
+    const hasBody = method !== 'GET' && method !== 'HEAD';
+    const rawBody = hasBody ? await req.text() : undefined;
+
+    const upstream = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': req.headers.get('content-type') ?? 'application/json',
+      },
+      body: hasBody ? rawBody : undefined,
+      cache: 'no-store',
+    });
+
+    const text = await upstream.text();
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: {
+        'Content-Type': upstream.headers.get('content-type') ?? 'application/json',
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error && /ECONNREFUSED|fetch failed|ENOTFOUND/.test(error.message)
+        ? 'Serviço de backend indisponível no momento.'
+        : 'Falha inesperada ao comunicar com o backend.';
+    return NextResponse.json(
+      { detail: message },
+      { status: 502 },
+    );
+  }
+}
+
+type Params = { params: Promise<{ path: string[] }> };
+
+export async function GET(req: NextRequest, { params }: Params) {
+  const { path } = await params;
+  return proxy(req, path);
+}
+
+export async function POST(req: NextRequest, { params }: Params) {
+  const { path } = await params;
+  return proxy(req, path);
+}
+
+export async function PUT(req: NextRequest, { params }: Params) {
+  const { path } = await params;
+  return proxy(req, path);
+}
+
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const { path } = await params;
+  return proxy(req, path);
+}
