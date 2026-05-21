@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const backendBaseUrl = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
-const normalizedBackendBaseUrl = backendBaseUrl.endsWith('/')
-  ? backendBaseUrl
-  : `${backendBaseUrl}/`;
+const normalizedBackendBaseUrl = backendBaseUrl.replace(/\/+$/, '') + '/';
 
 async function proxy(req: NextRequest, path: string[]) {
   try {

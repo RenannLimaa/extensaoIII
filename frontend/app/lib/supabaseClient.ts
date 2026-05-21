@@ -6,7 +6,7 @@ import type { Database } from './database.types';
  *
  * As chaves vem de NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
  * (ver .env.local.example). Se as variaveis nao estiverem presentes o client
- * ainda e instanciado, mas qualquer chamada real falhara.
+ * ainda e instanciado, mas qualquer chamada real falhará.
  */
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';

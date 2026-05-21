@@ -44,7 +44,8 @@ type BackendChatMessage = {
   question_id?: number | null;
 };
 
-const DEFAULT_CHAT_ID = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAT_ID ?? 1);
+const parsedDefaultChatId = Number.parseInt(process.env.NEXT_PUBLIC_DEFAULT_CHAT_ID ?? '1', 10);
+const DEFAULT_CHAT_ID = Number.isNaN(parsedDefaultChatId) ? 1 : parsedDefaultChatId;
 const VALID_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 const PROMPTS = {
   answer: (questionId: string, chosen: string) =>
@@ -52,6 +53,7 @@ const PROMPTS = {
   command: (actionId: string, questionId?: string) =>
     `Comando ${actionId}${questionId ? ` para questão ${questionId}` : ''}.`,
 };
+const PLAN_SUBJECTS: SubjectId[] = ['matematica', 'linguagens', 'natureza', 'humanas', 'redacao'];
 
 const fallbackBySkill: Record<number, SubjectId> = {
   1: 'matematica',
@@ -223,9 +225,9 @@ export const backendLlmClient: LlmClient = {
   },
 
   async buildStudyPlan({ goal, minutesPerDay = 60 }: StudyPlanInput): Promise<StudyPlanOutput> {
-    const week = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day) => ({
+    const week = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day, index) => ({
       day,
-      subjectId: 'matematica' as SubjectId,
+      subjectId: PLAN_SUBJECTS[index % PLAN_SUBJECTS.length],
       topic: goal || 'Revisão geral',
       minutes: minutesPerDay,
       goal: 'Praticar questões e revisar erros.',
