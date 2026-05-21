@@ -5,31 +5,11 @@ import { SUBJECTS } from '../../lib/catalog';
 import type { SubjectId } from '../../lib/types';
 import { useTheme } from '../providers/ThemeProvider';
 
-type SessionEntry = {
-  id: string;
-  subjectId: SubjectId;
-  title: string;
-  whenLabel: string;
-  accuracy: number;
-};
-
 type Props = {
   activeSubjectId: SubjectId;
   buildId?: string;
   onOpenCommand: () => void;
 };
-
-/**
- * Lista mockada de sessoes passadas (drag-to-reorder fica para v2 — o layout
- * ja tolera quando for adicionado).
- */
-const MOCK_SESSIONS: SessionEntry[] = [
-  { id: 's1', subjectId: 'matematica', title: 'Funções afim e quadrática', whenLabel: 'Hoje', accuracy: 72 },
-  { id: 's2', subjectId: 'linguagens', title: 'Interpretação — poesia moderna', whenLabel: 'Ontem', accuracy: 85 },
-  { id: 's3', subjectId: 'natureza', title: 'Cinemática — MRUV', whenLabel: '2 dias', accuracy: 40 },
-  { id: 's4', subjectId: 'humanas', title: 'República Velha', whenLabel: '3 dias', accuracy: 66 },
-  { id: 's5', subjectId: 'redacao', title: 'Proposta de intervenção', whenLabel: '5 dias', accuracy: 88 },
-];
 
 export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Props) {
   const { theme, toggle } = useTheme();
@@ -87,7 +67,6 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
             🗂️
           </span>
           <span>Flashcards</span>
-          <span className="count">12</span>
         </Link>
         <div className="ws-nav-item">
           <span className="emoji" aria-hidden>
@@ -101,19 +80,9 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         Sessões recentes
       </div>
       <div className="ws-sessions">
-        {MOCK_SESSIONS.map((s, i) => (
-          <div key={s.id} className={`ws-session ${i === 0 ? 'is-active' : ''}`}>
-            <div className="title">
-              <span aria-hidden>{SUBJECTS.find((x) => x.id === s.subjectId)?.icon}</span>
-              {s.title}
-            </div>
-            <div className="meta">
-              <span>{s.whenLabel}</span>
-              <span className="dot" />
-              <span>{s.accuracy}%</span>
-            </div>
-          </div>
-        ))}
+        <div className="ws-session">
+          <div className="title">Nenhuma sessão recente carregada.</div>
+        </div>
       </div>
 
       <div className="ws-sidebar-footer">
