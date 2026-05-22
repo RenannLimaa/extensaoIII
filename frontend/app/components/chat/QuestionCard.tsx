@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import type { AlternativeLetter, Question } from '../../lib/types';
 
 type Props = {
@@ -11,87 +10,70 @@ type Props = {
   onChoose: (letter: AlternativeLetter) => void;
 };
 
-function difficultyChip(d: Question['dificuldade']) {
-  const map = {
-    facil: { label: 'Fácil', cls: 'accent' },
-    media: { label: 'Média', cls: 'warn' },
-    dificil: { label: 'Difícil', cls: 'danger' },
-  } as const;
-  return map[d];
-}
+const DIFF: Record<Question['dificuldade'], { label: string; cls: string }> = {
+  facil: { label: 'Fácil', cls: 'accent' },
+  media: { label: 'Média', cls: 'warn' },
+  dificil: { label: 'Difícil', cls: 'danger' },
+};
 
 export function QuestionCard({ question, chosen, feedback, locked, onChoose }: Props) {
-  const diff = difficultyChip(question.dificuldade);
+  const diff = DIFF[question.dificuldade] ?? DIFF.media;
+  const alternativas = question.alternativas.filter((a) => a.texto.trim().length > 0);
 
   return (
-    <motion.div
-      className="q-card"
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="q-meta">
+    <article className="q-card q-card--uniform" aria-label="Questão">
+      <header className="q-meta">
         <span className="q-chip accent">{question.assunto}</span>
-        {question.ano && <span className="q-chip">ENEM {question.ano}</span>}
+        {question.ano ? <span className="q-chip">ENEM {question.ano}</span> : null}
         <span className={`q-chip ${diff.cls}`}>{diff.label}</span>
-      </div>
+      </header>
 
       <p className="q-statement">{question.enunciado}</p>
 
-      <ul className="q-alts">
-        {question.alternativas.map((alt, idx) => {
-          const isChosen = chosen === alt.letra;
-          let cls = 'q-alt';
-          if (locked) {
-            if (alt.correta) cls += ' is-correct';
-            else if (isChosen && !alt.correta) cls += ' is-wrong';
-          } else if (isChosen) {
-            cls += ' is-chosen';
-          }
-          return (
-            <motion.li
-              key={alt.letra}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.04 }}
-            >
-              <button
-                type="button"
-                className={cls}
-                disabled={locked}
-                onClick={() => onChoose(alt.letra)}
-                aria-pressed={isChosen}
-              >
-                <span className="letter">{alt.letra}</span>
-                <span>
-                  {alt.texto}
-                  {locked && alt.correta && alt.feedback && <span className="alt-note">{alt.feedback}</span>}
-                  {locked && isChosen && !alt.correta && alt.feedback && (
-                    <span className="alt-note">{alt.feedback}</span>
-                  )}
-                </span>
-              </button>
-            </motion.li>
-          );
-        })}
-      </ul>
+      {alternativas.length > 0 ? (
+        <ul className="q-alts" role="list">
+          {alternativas.map((alt) => {
+            const isChosen = chosen === alt.letra;
+            let cls = 'q-alt';
+            if (locked) {
+              if (alt.correta) cls += ' is-correct';
+              else if (isChosen && !alt.correta) cls += ' is-wrong';
+            } else if (isChosen) {
+              cls += ' is-chosen';
+            }
+            return (
+              <li key={alt.letra} className="q-alt-row">
+                <button
+                  type="button"
+                  className={cls}
+                  disabled={locked}
+                  onClick={() => onChoose(alt.letra)}
+                  aria-pressed={isChosen}
+                >
+                  <span className="letter" aria-hidden>
+                    {alt.letra}
+                  </span>
+                  <span className="q-alt-text">{alt.texto}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="q-empty-alts">Alternativas indisponíveis.</p>
+      )}
 
-      {feedback && (
-        <motion.div
-          className={`q-verdict ${feedback.correta ? 'correct' : 'wrong'}`}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: 0.1 }}
-        >
+      {feedback ? (
+        <footer className={`q-verdict ${feedback.correta ? 'correct' : 'wrong'}`}>
           <span className="v-icon" aria-hidden>
             {feedback.correta ? '✓' : '✕'}
           </span>
           <div>
             <strong>{feedback.correta ? 'Resposta correta' : 'Resposta incorreta'}</strong>
-            {feedback.explicacao}
+            <p className="q-verdict-text">{feedback.explicacao}</p>
           </div>
-        </motion.div>
-      )}
-    </motion.div>
+        </footer>
+      ) : null}
+    </article>
   );
 }

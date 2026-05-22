@@ -816,15 +816,41 @@ body::before {
 }
 .msg-actions button:hover { background: var(--bg-soft); color: var(--text-primary); }
 
-/* Question card */
-.q-card {
-  border: 1px solid var(--border); background: var(--bg-raised);
-  border-radius: var(--radius-lg);
-  padding: 22px 24px;
-  box-shadow: var(--shadow-sm);
-  position: relative;
+/* Question card — layout fixo em todas as matérias */
+.msg-question-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 8px;
 }
-.q-card .q-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.msg.assistant .msg-body .q-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.q-card,
+.q-card--uniform {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.q-card .q-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 0;
+}
 .q-chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 9px; border-radius: 999px;
@@ -837,27 +863,86 @@ body::before {
 .q-chip.danger { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
 
 .q-statement {
-  font-size: 1rem; line-height: 1.6; color: var(--text-primary);
-  margin: 0 0 18px;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  padding: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
-.q-alts { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.q-alts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.q-alt-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 .q-alt {
   width: 100%;
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 11px 14px;
-  background: var(--bg-raised); border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 52px;
+  background: var(--bg-base, var(--bg-raised));
+  border: 1px solid var(--border);
   border-radius: 10px;
-  font-size: 0.92rem; color: var(--text-primary);
+  font-size: 0.9rem;
+  color: var(--text-primary);
   text-align: left;
-  transition: all var(--dur-fast);
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+  box-sizing: border-box;
+  cursor: pointer;
 }
-.q-alt:not(:disabled):hover { border-color: var(--border-strong); background: var(--bg-soft); transform: translateX(2px); }
-.q-alt[disabled] { cursor: default; }
+
+.q-alt-text {
+  display: block;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding-top: 4px;
+}
+
+.q-empty-alts {
+  margin: 0;
+  padding: 12px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  background: var(--bg-soft);
+  border-radius: 8px;
+}
+.q-alt:not(:disabled):hover {
+  border-color: var(--border-strong);
+  background: var(--bg-soft);
+}
+.q-alt[disabled] {
+  cursor: default;
+}
 .q-alt .letter {
-  width: 26px; height: 26px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--bg-soft); border: 1px solid var(--border);
-  font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .q-alt.is-chosen { border-color: var(--accent); background: var(--accent-soft); }
@@ -880,6 +965,7 @@ body::before {
 .q-verdict.wrong { background: var(--danger-soft); border-color: transparent; color: var(--text-primary); }
 .q-verdict .v-icon { font-size: 18px; flex-shrink: 0; }
 .q-verdict strong { display: block; margin-bottom: 4px; font-weight: 600; }
+.q-verdict-text { margin: 0; }
 
 /* Smart suggestions */
 .suggestions {

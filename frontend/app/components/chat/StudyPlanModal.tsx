@@ -1,80 +1,56 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { llm } from '../../lib/llm';
-import type { StudyPlanOutput } from '../../lib/llm/llmClient';
-import { findSubject } from '../../lib/catalog';
+import { useState } from 'react';
+import { promptAI } from '../../lib/backendApi';
+import { mapBackendMessages } from '../../lib/backendChat';
+import type { SubjectId } from '../../lib/types';
 
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Obrigatório para chamar a IA real (PUT /chat/prompt). */
+  chatId?: number | null;
+  questionId?: number;
+  subjectId?: SubjectId;
+  habilidadeId?: number;
 };
 
-const PLAN_STORAGE_KEY = 'enembot:last_study_plan';
-
-type StoredPlan = {
-  createdAt: number;
-  plan: StudyPlanOutput;
-};
-
-export function StudyPlanModal({ open, onOpenChange }: Props) {
+export function StudyPlanModal({
+  open,
+  onOpenChange,
+  chatId,
+  questionId = 0,
+  subjectId = 'matematica',
+  habilidadeId = 1,
+}: Props) {
   const [goal, setGoal] = useState('Faltam 60 dias para o ENEM, quero focar em exatas.');
   const [minutes, setMinutes] = useState(60);
   const [days, setDays] = useState(7);
-  const [plan, setPlan] = useState<StudyPlanOutput | null>(null);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [reply, setReply] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    try {
-      const raw = localStorage.getItem(PLAN_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StoredPlan;
-      if (!parsed?.plan) return;
-      setPlan(parsed.plan);
-      setSavedAt(parsed.createdAt ?? null);
-    } catch {
-      // ignore parse errors
-    }
-  }, [open]);
-
-  function persistPlan(nextPlan: StudyPlanOutput) {
-    const createdAt = Date.now();
-    const payload: StoredPlan = { createdAt, plan: nextPlan };
-    localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(payload));
-    setSavedAt(createdAt);
-  }
-
-  function clearStoredPlan() {
-    localStorage.removeItem(PLAN_STORAGE_KEY);
-    setSavedAt(null);
-  }
-
-  function downloadPlanAsText(currentPlan: StudyPlanOutput) {
-    const lines: string[] = [currentPlan.title, '', currentPlan.overview, ''];
-    currentPlan.week.forEach((day) => {
-      lines.push(`${day.day} - ${findSubject(day.subjectId)?.title ?? day.subjectId} - ${day.minutes}min`);
-      lines.push(`${day.topic}`);
-      lines.push(`${day.goal}`);
-      lines.push('');
-    });
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `plano-estudos-${new Date().toISOString().slice(0, 10)}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const [error, setError] = useState<string | null>(null);
 
   async function generate() {
+    if (!chatId) {
+      setError('Abra uma matéria no chat para a IA gerar o plano (API /chat/prompt).');
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
-      const res = await llm.buildStudyPlan({ goal, minutesPerDay: minutes, days });
-      setPlan(res);
-      persistPlan(res);
+      const texto = [
+        'Monte um plano de estudos em markdown.',
+        `Objetivo: ${goal}`,
+        `Minutos por dia: ${minutes}`,
+        `Dias: ${days}`,
+      ].join(' ');
+      const raw = await promptAI(chatId, questionId, texto);
+      const mapped = await mapBackendMessages(raw, subjectId);
+      const lastLlm = [...mapped].reverse().find((m) => m.role === 'assistant' && m.content);
+      setReply(lastLlm?.content ?? 'A IA não retornou texto. Tente de novo no chat.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao chamar a API');
     } finally {
       setLoading(false);
     }
@@ -95,108 +71,76 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
             className="modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Gerador de plano de estudos"
+            aria-label="Plano de estudos via IA"
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: -4 }}
             transition={{ duration: 0.22, ease: [0.34, 1.56, 0.64, 1] }}
           >
             <div className="modal-header">
-              <h3>📅 Gerar plano de estudos</h3>
+              <h3>📅 Plano de estudos (IA)</h3>
               <button className="icon-btn" onClick={() => onOpenChange(false)} aria-label="Fechar">
                 ✕
               </button>
             </div>
             <div className="modal-body">
-              {!plan ? (
+              {!reply ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {!chatId && (
+                    <p style={{ color: 'var(--danger, #e11)', fontSize: '0.88rem', margin: 0 }}>
+                      Entre em um chat de matéria antes de gerar — a IA só responde pela API do backend.
+                    </p>
+                  )}
                   <label style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                    Qual seu objetivo?
+                    Objetivo
                     <textarea
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
                       className="input textarea"
                       style={{ marginTop: 6 }}
-                      placeholder="Ex: faltam 60 dias, preciso melhorar matemática e redação"
                     />
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <label style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                      Minutos por dia
+                      Min/dia
                       <input
                         type="number"
                         className="input"
                         value={minutes}
                         min={15}
-                        max={240}
-                        step={15}
                         onChange={(e) => setMinutes(Number(e.target.value) || 60)}
                         style={{ marginTop: 6 }}
                       />
                     </label>
                     <label style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                      Dias do plano
+                      Dias
                       <input
                         type="number"
                         className="input"
                         value={days}
                         min={3}
-                        max={7}
+                        max={14}
                         onChange={(e) => setDays(Number(e.target.value) || 7)}
                         style={{ marginTop: 6 }}
                       />
                     </label>
                   </div>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                    O plano fica salvo localmente para você continuar depois, mesmo sem integração com backend.
-                  </p>
+                  {error && <p style={{ color: 'var(--danger, #e11)', fontSize: '0.85rem' }}>{error}</p>}
                 </div>
               ) : (
-                <div>
-                  <h4 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 400 }}>
-                    {plan.title}
-                  </h4>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginTop: 0 }}>{plan.overview}</p>
-                  {savedAt && (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: -4 }}>
-                      Última atualização: {new Date(savedAt).toLocaleString('pt-BR')}
-                    </p>
-                  )}
-                  <div style={{ marginTop: 12 }}>
-                    {plan.week.map((d, i) => (
-                      <motion.div
-                        key={i}
-                        className="plan-day"
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                      >
-                        <span className="day">
-                          {d.day} · {findSubject(d.subjectId)?.icon}
-                        </span>
-                        <span className="task">
-                          <strong style={{ color: 'var(--text-primary)' }}>{findSubject(d.subjectId)?.title}</strong> — {d.topic}
-                          <br />
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{d.goal}</span>
-                        </span>
-                        <span className="min">{d.minutes}min</span>
-                      </motion.div>
-                    ))}
-                  </div>
+                <div className="msg-text" style={{ fontSize: '0.92rem' }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{reply}</pre>
                 </div>
               )}
             </div>
             <div className="modal-footer">
-              {plan ? (
+              {reply ? (
                 <>
-                  <button className="btn btn-ghost" onClick={() => downloadPlanAsText(plan)}>
-                    Baixar .txt
-                  </button>
-                  <button className="btn btn-ghost" onClick={() => { clearStoredPlan(); setPlan(null); }}>
-                    Novo plano
+                  <button className="btn btn-ghost" onClick={() => setReply(null)}>
+                    Novo pedido
                   </button>
                   <button className="btn btn-accent" onClick={() => onOpenChange(false)}>
-                    Começar agora
+                    Fechar
                   </button>
                 </>
               ) : (
@@ -204,8 +148,8 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
                   <button className="btn btn-ghost" onClick={() => onOpenChange(false)}>
                     Cancelar
                   </button>
-                  <button className="btn btn-accent" onClick={generate} disabled={loading}>
-                    {loading ? 'Gerando…' : 'Gerar plano'}
+                  <button className="btn btn-accent" onClick={generate} disabled={loading || !chatId}>
+                    {loading ? 'Chamando API…' : 'Gerar com IA'}
                   </button>
                 </>
               )}

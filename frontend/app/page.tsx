@@ -34,7 +34,7 @@ export default function HomePage() {
       return;
     }
     // maioria das acoes IA so faz sentido dentro do chat — empurra o usuario pra la
-    router.push('/chat/matematica?build=teorico');
+    router.push('/chat/matematica');
   }
 
   return (
@@ -44,7 +44,7 @@ export default function HomePage() {
       <LogosStrip />
       <Features />
       <Builds />
-      <SubjectsShowcase buildId="teorico" />
+      <SubjectsShowcase />
       <Workflow />
       <Testimonials />
       <FAQ />

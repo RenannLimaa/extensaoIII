@@ -3,41 +3,32 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SUBJECTS } from '../../lib/catalog';
-import { formatRecentLabel, listRecentSessions, totalAnsweredInRecentSessions } from '../../lib/sessionStore';
+import { retrieveAllChats } from '../../lib/backendApi';
+import type { ChatSchema } from '../../lib/backendTypes';
+import { useBackendUser } from '../../lib/useBackendUser';
 import type { SubjectId } from '../../lib/types';
+import { habilidadeNome, subjectToHabilidadeId } from '../../lib/subjectHabilidade';
 import { useTheme } from '../providers/ThemeProvider';
-
-type SessionEntry = {
-  id: string;
-  subjectId: SubjectId;
-  title: string;
-  whenLabel: string;
-  accuracy: number;
-};
+import { AuthModal } from '../user/AuthModal';
 
 type Props = {
   activeSubjectId: SubjectId;
-  buildId?: string;
   onOpenCommand: () => void;
 };
 
-export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Props) {
+export function WorkspaceSidebar({ activeSubjectId, onOpenCommand }: Props) {
   const { theme, toggle } = useTheme();
-  const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
-  const [sessions, setSessions] = useState<SessionEntry[]>([]);
-  const [flashcardsCount, setFlashcardsCount] = useState(0);
+  const { user, logout, loading: userLoading } = useBackendUser();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [chats, setChats] = useState<ChatSchema[]>([]);
+  const activeHabilidade = subjectToHabilidadeId(activeSubjectId);
 
   useEffect(() => {
-    const recent = listRecentSessions(6).map((session) => ({
-      id: session.id,
-      subjectId: session.subjectId,
-      title: session.title,
-      whenLabel: formatRecentLabel(session.updatedAt),
-      accuracy: session.accuracy,
-    }));
-    setSessions(recent);
-    setFlashcardsCount(totalAnsweredInRecentSessions());
-  }, [activeSubjectId, buildId]);
+    retrieveAllChats()
+      .then((all) => all.filter((c) => c.habilidade === activeHabilidade))
+      .then(setChats)
+      .catch(() => setChats([]));
+  }, [activeSubjectId, activeHabilidade]);
 
   return (
     <aside className="ws-sidebar" aria-label="Navegação da workspace">
@@ -67,7 +58,7 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         {SUBJECTS.map((s) => (
           <Link
             key={s.id}
-            href={`/chat/${s.id}${qs}`}
+            href={`/chat/${s.id}`}
             className={`ws-nav-item ${s.id === activeSubjectId ? 'is-active' : ''}`}
           >
             <span className="emoji" aria-hidden>
@@ -78,51 +69,25 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         ))}
       </nav>
 
-      <nav className="ws-nav" style={{ marginTop: 8 }}>
-        <div className="ws-nav-label">Recursos IA</div>
-        <div className="ws-nav-item" onClick={onOpenCommand}>
-          <span className="emoji" aria-hidden>
-            ✨
-          </span>
-          <span>Paleta de comandos</span>
-        </div>
-        <Link href={`/chat/${activeSubjectId}${qs}`} className="ws-nav-item">
-          <span className="emoji" aria-hidden>
-            🗂️
-          </span>
-          <span>Flashcards</span>
-          <span className="count">{flashcardsCount}</span>
-        </Link>
-        <div className="ws-nav-item">
-          <span className="emoji" aria-hidden>
-            📅
-          </span>
-          <span>Plano semanal</span>
-        </div>
-      </nav>
-
       <div className="ws-nav-label" style={{ padding: '14px 14px 4px' }}>
-        Sessões recentes
+        Chats · {habilidadeNome(activeHabilidade)}
       </div>
       <div className="ws-sessions">
-        {sessions.length === 0 && (
+        {chats.length === 0 && (
           <div className="ws-session" style={{ opacity: 0.8 }}>
-            <div className="title">Nenhuma sessão concluída ainda</div>
+            <div className="title">Nenhum chat ainda</div>
             <div className="meta">
-              <span>Resolva questões para preencher seu histórico</span>
+              <span>Abra uma matéria para criar um chat</span>
             </div>
           </div>
         )}
-        {sessions.map((s) => (
-          <div key={s.id} className={`ws-session ${s.subjectId === activeSubjectId ? 'is-active' : ''}`}>
-            <div className="title">
-              <span aria-hidden>{SUBJECTS.find((x) => x.id === s.subjectId)?.icon}</span>
-              {s.title}
-            </div>
+        {chats.map((c) => (
+          <div key={c.id} className="ws-session">
+            <div className="title">{c.chat_name}</div>
             <div className="meta">
-              <span>{s.whenLabel}</span>
+              <span>ID {c.id}</span>
               <span className="dot" />
-              <span>{s.accuracy}%</span>
+              <span>{habilidadeNome(c.habilidade)}</span>
             </div>
           </div>
         ))}
@@ -130,12 +95,30 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
 
       <div className="ws-sidebar-footer">
         <span className="av" aria-hidden>
-          T
+          {(user?.username ?? '?').slice(0, 1).toUpperCase()}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.84rem' }}>Estudante ENEM</div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Protótipo v0.2</div>
+          <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.84rem' }}>
+            {user?.username ?? 'Visitante'}
+          </div>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+            {user ? user.email : 'Não logado'}
+          </div>
         </div>
+        {user ? (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
+            Sair
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setAuthOpen(true)}
+            disabled={userLoading}
+          >
+            Entrar
+          </button>
+        )}
         <button className="icon-btn" onClick={toggle} aria-label="Alternar tema" title="Alternar tema (⌘⇧L)">
           {theme === 'dark' ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -149,6 +132,7 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
           )}
         </button>
       </div>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </aside>
   );
 }

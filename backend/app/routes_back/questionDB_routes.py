@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import os
+import random
 from app.schemas.question import QuestionSchema
 from app.schemas.alternativa import AlternativaSchema
 
@@ -48,6 +49,23 @@ def getQuestionByID(id: int):
         return question
     else:
         return None
+
+def getRandomQuestionByHabilidade(habilidade_id: int, exclude_ids: list[int] | None = None):
+    """
+    Escolhe aleatoriamente uma questão da habilidade do chat.
+    """
+    response = (
+        supabase.table("Question")
+        .select("id")
+        .eq("habilidade", habilidade_id)
+        .execute()
+    )
+    rows = response.data or []
+    excluded = set(exclude_ids or [])
+    ids = [row["id"] for row in rows if row.get("id") is not None and row["id"] not in excluded]
+    if not ids:
+        return None
+    return getQuestionByID(random.choice(ids))
 
 def getUnsolvedQuestion(user_id: int, habilidade: str, competencia: str):
     """
