@@ -1,7 +1,7 @@
-import type { SubjectItem } from '../../mocks/homeContent';
+import type { Subject } from '../../lib/types';
 
 type SubjectCardProps = {
-  item: SubjectItem;
+  item: Subject;
 };
 
 export function SubjectCard({ item }: SubjectCardProps) {

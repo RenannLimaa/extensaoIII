@@ -13,7 +13,7 @@ const qa = [
   },
   {
     q: 'As questões são reais do ENEM?',
-    a: 'No protótipo, usamos um banco mockado com questões inspiradas em provas recentes. Na versão final, misturamos banco oficial + questões geradas pela IA na hora.',
+    a: 'As sessões usam questões no estilo ENEM para treino prático. O catálogo evolui continuamente com novas questões e ajustes de dificuldade.',
   },
   {
     q: 'O ENEMBot substitui um cursinho?',

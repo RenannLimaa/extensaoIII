@@ -14,6 +14,7 @@ import { WorkspaceSidebar } from '../../components/chat/WorkspaceSidebar';
 import { useTheme } from '../../components/providers/ThemeProvider';
 import { findBuild, findSubject } from '../../lib/catalog';
 import { llm } from '../../lib/llm';
+import { upsertRecentSession } from '../../lib/sessionStore';
 import type {
   AlternativeLetter,
   BuildId,
@@ -72,6 +73,21 @@ export default function ChatPage({ params }: PageProps) {
   }, [messages, typing, scrollToBottom]);
 
   const subjectId = subject.id as SubjectId;
+
+  useEffect(() => {
+    if (stats.answered <= 0) return;
+    const lastQuestion = [...messages].reverse().find((m) => Boolean(m.question))?.question;
+    const title = lastQuestion?.assunto ?? `${subject.title} · ${findBuild(buildId)?.title ?? 'Sessão'}`;
+
+    upsertRecentSession({
+      id: `${subjectId}:${buildId}`,
+      subjectId,
+      buildId,
+      title,
+      answered: stats.answered,
+      correct: stats.correct,
+    });
+  }, [buildId, messages, stats.answered, stats.correct, subject.title, subjectId]);
 
   /* ---------- Session kickoff ---------- */
   useEffect(() => {
