@@ -17,6 +17,8 @@ type Props = {
   activeSubjectId: SubjectId;
   buildId?: string;
   onOpenCommand: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
 /**
@@ -31,12 +33,12 @@ const MOCK_SESSIONS: SessionEntry[] = [
   { id: 's5', subjectId: 'redacao', title: 'Proposta de intervenção', whenLabel: '5 dias', accuracy: 88 },
 ];
 
-export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Props) {
+export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand, collapsed = false, onToggleCollapse }: Props) {
   const { theme, toggle } = useTheme();
   const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
 
   return (
-    <aside className="ws-sidebar" aria-label="Navegação da workspace">
+    <aside className={`ws-sidebar ${collapsed ? 'is-collapsed' : ''}`} aria-label="Navegação da workspace">
       <div className="ws-sidebar-header">
         <Link href="/" className="brand-lockup" aria-label="ENEMBot home">
           <span className="brand-mark" aria-hidden>
@@ -44,6 +46,17 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
           </span>
           <span className="brand-name">ENEMBot</span>
         </Link>
+        {onToggleCollapse && (
+          <button
+            className="collapse-toggle"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <button className="ws-sidebar-search" onClick={onOpenCommand} aria-label="Abrir paleta de comandos">
@@ -65,6 +78,7 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
             key={s.id}
             href={`/chat/${s.id}${qs}`}
             className={`ws-nav-item ${s.id === activeSubjectId ? 'is-active' : ''}`}
+            title={collapsed ? s.title : undefined}
           >
             <span className="emoji" aria-hidden>
               {s.icon}
@@ -76,20 +90,20 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
 
       <nav className="ws-nav" style={{ marginTop: 8 }}>
         <div className="ws-nav-label">Recursos IA</div>
-        <div className="ws-nav-item" onClick={onOpenCommand}>
+        <div className="ws-nav-item" onClick={onOpenCommand} title={collapsed ? 'Paleta de comandos' : undefined}>
           <span className="emoji" aria-hidden>
             ✨
           </span>
           <span>Paleta de comandos</span>
         </div>
-        <Link href={`/chat/${activeSubjectId}${qs}`} className="ws-nav-item">
+        <Link href={`/chat/${activeSubjectId}${qs}`} className="ws-nav-item" title={collapsed ? 'Flashcards' : undefined}>
           <span className="emoji" aria-hidden>
             🗂️
           </span>
           <span>Flashcards</span>
           <span className="count">12</span>
         </Link>
-        <div className="ws-nav-item">
+        <div className="ws-nav-item" title={collapsed ? 'Plano semanal' : undefined}>
           <span className="emoji" aria-hidden>
             📅
           </span>

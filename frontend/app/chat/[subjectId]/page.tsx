@@ -53,6 +53,7 @@ export default function ChatPage({ params }: PageProps) {
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [studyPlanOpen, setStudyPlanOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
@@ -372,11 +373,13 @@ export default function ChatPage({ params }: PageProps) {
   }, [messages]);
 
   return (
-    <div className="workspace">
+    <div className={`workspace ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <WorkspaceSidebar
         activeSubjectId={subjectId}
         buildId={buildId}
         onOpenCommand={() => setCmdOpen(true)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
       />
 
       <section className="ws-main">
