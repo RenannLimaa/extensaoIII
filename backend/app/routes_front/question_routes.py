@@ -41,7 +41,10 @@ def randomQuestion(chat_id: int):
             status_code=404,
             detail="Nenhuma questão disponível para esta matéria no momento",
         )
+    question_text = question.enunciado + "\n"
+    for alt in question.alternativas:
+        question_text += "\n" + str(alt.letra) + ") " + str(alt.texto)
     id_aleatorio = question.id
-    createChatMessage(chat_id, "llm", f"Questão #{id_aleatorio} disponível abaixo.", id_aleatorio)
+    createChatMessage(chat_id, "llm", question_text, id_aleatorio)
     chat_messages = getChatsMessagesByChat(chat_id)
     return chat_messages if chat_messages is not None else []
