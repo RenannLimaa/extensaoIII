@@ -14,9 +14,10 @@ import { AuthModal } from '../user/AuthModal';
 type Props = {
   activeSubjectId: SubjectId;
   onOpenCommand: () => void;
+  collapsed?: boolean;
 };
 
-export function WorkspaceSidebar({ activeSubjectId, onOpenCommand }: Props) {
+export function WorkspaceSidebar({ activeSubjectId, onOpenCommand, collapsed = false }: Props) {
   const { theme, toggle } = useTheme();
   const { user, logout, loading: userLoading } = useBackendUser();
   const [authOpen, setAuthOpen] = useState(false);
@@ -31,7 +32,7 @@ export function WorkspaceSidebar({ activeSubjectId, onOpenCommand }: Props) {
   }, [activeSubjectId, activeHabilidade]);
 
   return (
-    <aside className="ws-sidebar" aria-label="Navegação da workspace">
+    <aside className={`ws-sidebar ${collapsed ? 'is-collapsed' : ''}`} aria-label="Navegação da workspace">
       <div className="ws-sidebar-header">
         <Link href="/" className="brand-lockup" aria-label="ENEMBot home">
           <span className="brand-mark" aria-hidden>
@@ -60,6 +61,7 @@ export function WorkspaceSidebar({ activeSubjectId, onOpenCommand }: Props) {
             key={s.id}
             href={`/chat/${s.id}`}
             className={`ws-nav-item ${s.id === activeSubjectId ? 'is-active' : ''}`}
+            title={collapsed ? s.title : undefined}
           >
             <span className="emoji" aria-hidden>
               {s.icon}

@@ -55,6 +55,7 @@ export default function ChatPage({ params }: PageProps) {
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [studyPlanOpen, setStudyPlanOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rawMessagesRef = useRef<Awaited<ReturnType<typeof retrieveMessagesByChat>>>([]);
@@ -293,6 +294,14 @@ export default function ChatPage({ params }: PageProps) {
       const target = e.target as HTMLElement | null;
       const typingInField =
         target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      // Cmd+B → toggle sidebar
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        setSidebarCollapsed((c) => !c);
+        return;
+      }
+      // Cmd+Shift+L → toggle theme
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'l' || e.key === 'L')) {
         e.preventDefault();
         setTheme(theme === 'light' ? 'dark' : 'light');
@@ -319,11 +328,26 @@ export default function ChatPage({ params }: PageProps) {
   }, [messages]);
 
   return (
-    <div className="workspace">
-      <WorkspaceSidebar activeSubjectId={subjectId} onOpenCommand={() => setCmdOpen(true)} />
+    <div className={`workspace ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <WorkspaceSidebar
+        activeSubjectId={subjectId}
+        onOpenCommand={() => setCmdOpen(true)}
+        collapsed={sidebarCollapsed}
+      />
 
       <section className="ws-main">
         <div className="ws-topbar">
+          <button
+            className="icon-btn"
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            aria-label={sidebarCollapsed ? 'Expandir sidebar (⌘B)' : 'Recolher sidebar (⌘B)'}
+            title={sidebarCollapsed ? 'Expandir (⌘B)' : 'Recolher (⌘B)'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
           <div className="ws-breadcrumb">
             <span>{subject.icon}</span>
             <span className="cur">{subject.title}</span>
@@ -381,6 +405,7 @@ export default function ChatPage({ params }: PageProps) {
       </section>
 
       <Inspector
+        subjectId={subjectId}
         stats={stats}
         onOpenStudyPlan={() => setStudyPlanOpen(true)}
         onOpenCommand={() => setCmdOpen(true)}
