@@ -18,13 +18,8 @@ type Props = {
   buildId?: string;
   onOpenCommand: () => void;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
 };
 
-/**
- * Lista mockada de sessoes passadas (drag-to-reorder fica para v2 — o layout
- * ja tolera quando for adicionado).
- */
 const MOCK_SESSIONS: SessionEntry[] = [
   { id: 's1', subjectId: 'matematica', title: 'Funções afim e quadrática', whenLabel: 'Hoje', accuracy: 72 },
   { id: 's2', subjectId: 'linguagens', title: 'Interpretação — poesia moderna', whenLabel: 'Ontem', accuracy: 85 },
@@ -33,7 +28,7 @@ const MOCK_SESSIONS: SessionEntry[] = [
   { id: 's5', subjectId: 'redacao', title: 'Proposta de intervenção', whenLabel: '5 dias', accuracy: 88 },
 ];
 
-export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand, collapsed = false, onToggleCollapse }: Props) {
+export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand, collapsed = false }: Props) {
   const { theme, toggle } = useTheme();
   const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
 
@@ -46,17 +41,6 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand, coll
           </span>
           <span className="brand-name">ENEMBot</span>
         </Link>
-        {onToggleCollapse && (
-          <button
-            className="collapse-toggle"
-            onClick={onToggleCollapse}
-            aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-        )}
       </div>
 
       <button className="ws-sidebar-search" onClick={onOpenCommand} aria-label="Abrir paleta de comandos">

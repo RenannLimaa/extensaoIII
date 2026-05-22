@@ -340,6 +340,12 @@ export default function ChatPage({ params }: PageProps) {
       const typingInField =
         target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
+      // Cmd+B → toggle sidebar
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        setSidebarCollapsed((c) => !c);
+        return;
+      }
       // Cmd+Shift+L → toggle theme
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'l' || e.key === 'L')) {
         e.preventDefault();
@@ -379,11 +385,21 @@ export default function ChatPage({ params }: PageProps) {
         buildId={buildId}
         onOpenCommand={() => setCmdOpen(true)}
         collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
       />
 
       <section className="ws-main">
         <div className="ws-topbar">
+          <button
+            className="icon-btn"
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            aria-label={sidebarCollapsed ? 'Expandir sidebar (⌘B)' : 'Recolher sidebar (⌘B)'}
+            title={sidebarCollapsed ? 'Expandir (⌘B)' : 'Recolher (⌘B)'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
           <div className="ws-breadcrumb">
             <span>{subject.icon}</span>
             <span>{subject.title}</span>
