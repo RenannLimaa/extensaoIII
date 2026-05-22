@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { llm } from '../../lib/llm';
 import type { StudyPlanOutput } from '../../lib/llm/llmClient';
 import { findSubject } from '../../lib/catalog';
@@ -11,18 +11,70 @@ type Props = {
   onOpenChange: (v: boolean) => void;
 };
 
+const PLAN_STORAGE_KEY = 'enembot:last_study_plan';
+
+type StoredPlan = {
+  createdAt: number;
+  plan: StudyPlanOutput;
+};
+
 export function StudyPlanModal({ open, onOpenChange }: Props) {
   const [goal, setGoal] = useState('Faltam 60 dias para o ENEM, quero focar em exatas.');
   const [minutes, setMinutes] = useState(60);
   const [days, setDays] = useState(7);
   const [plan, setPlan] = useState<StudyPlanOutput | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(PLAN_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StoredPlan;
+      if (!parsed?.plan) return;
+      setPlan(parsed.plan);
+      setSavedAt(parsed.createdAt ?? null);
+    } catch {
+      // ignore parse errors
+    }
+  }, [open]);
+
+  function persistPlan(nextPlan: StudyPlanOutput) {
+    const createdAt = Date.now();
+    const payload: StoredPlan = { createdAt, plan: nextPlan };
+    localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(payload));
+    setSavedAt(createdAt);
+  }
+
+  function clearStoredPlan() {
+    localStorage.removeItem(PLAN_STORAGE_KEY);
+    setSavedAt(null);
+  }
+
+  function downloadPlanAsText(currentPlan: StudyPlanOutput) {
+    const lines: string[] = [currentPlan.title, '', currentPlan.overview, ''];
+    currentPlan.week.forEach((day) => {
+      lines.push(`${day.day} - ${findSubject(day.subjectId)?.title ?? day.subjectId} - ${day.minutes}min`);
+      lines.push(`${day.topic}`);
+      lines.push(`${day.goal}`);
+      lines.push('');
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `plano-estudos-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function generate() {
     setLoading(true);
     try {
       const res = await llm.buildStudyPlan({ goal, minutesPerDay: minutes, days });
       setPlan(res);
+      persistPlan(res);
     } finally {
       setLoading(false);
     }
@@ -96,8 +148,7 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
                     </label>
                   </div>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                    No protótipo, o plano é gerado com lógica mock baseada em palavras-chave no objetivo. Com a IA plugada,
-                    ele considera seu histórico de acertos.
+                    O plano fica salvo localmente para você continuar depois, mesmo sem integração com backend.
                   </p>
                 </div>
               ) : (
@@ -106,6 +157,11 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
                     {plan.title}
                   </h4>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginTop: 0 }}>{plan.overview}</p>
+                  {savedAt && (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: -4 }}>
+                      Última atualização: {new Date(savedAt).toLocaleString('pt-BR')}
+                    </p>
+                  )}
                   <div style={{ marginTop: 12 }}>
                     {plan.week.map((d, i) => (
                       <motion.div
@@ -133,7 +189,10 @@ export function StudyPlanModal({ open, onOpenChange }: Props) {
             <div className="modal-footer">
               {plan ? (
                 <>
-                  <button className="btn btn-ghost" onClick={() => setPlan(null)}>
+                  <button className="btn btn-ghost" onClick={() => downloadPlanAsText(plan)}>
+                    Baixar .txt
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => { clearStoredPlan(); setPlan(null); }}>
                     Novo plano
                   </button>
                   <button className="btn btn-accent" onClick={() => onOpenChange(false)}>

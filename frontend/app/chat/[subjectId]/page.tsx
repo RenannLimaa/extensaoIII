@@ -13,6 +13,7 @@ import { WorkspaceSidebar } from '../../components/chat/WorkspaceSidebar';
 import { useTheme } from '../../components/providers/ThemeProvider';
 import { findBuild, findSubject } from '../../lib/catalog';
 import { llm } from '../../lib/llm';
+import { upsertRecentSession } from '../../lib/sessionStore';
 import type {
   AlternativeLetter,
   BuildId,
@@ -50,6 +51,7 @@ export default function ChatPage({ params }: PageProps) {
   const [typing, setTyping] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [askedIds, setAskedIds] = useState<string[]>([]);
+  const [stats, setStats] = useState({ answered: 0, correct: 0 });
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [studyPlanOpen, setStudyPlanOpen] = useState(false);
@@ -71,6 +73,21 @@ export default function ChatPage({ params }: PageProps) {
   }, [messages, typing, scrollToBottom]);
 
   const subjectId = subject.id as SubjectId;
+
+  useEffect(() => {
+    if (stats.answered <= 0) return;
+    const lastQuestion = [...messages].reverse().find((m) => Boolean(m.question))?.question;
+    const title = lastQuestion?.assunto ?? `${subject.title} · ${findBuild(buildId)?.title ?? 'Sessão'}`;
+
+    upsertRecentSession({
+      id: `${subjectId}:${buildId}`,
+      subjectId,
+      buildId,
+      title,
+      answered: stats.answered,
+      correct: stats.correct,
+    });
+  }, [buildId, messages, stats.answered, stats.correct, subject.title, subjectId]);
 
   /* ---------- Session kickoff ---------- */
   useEffect(() => {
@@ -129,6 +146,10 @@ export default function ChatPage({ params }: PageProps) {
             createdAt: Date.now(),
           },
         ]);
+        setStats((s) => ({
+          answered: s.answered + 1,
+          correct: s.correct + (ans.correta ? 1 : 0),
+        }));
       } finally {
         setTyping(false);
       }
