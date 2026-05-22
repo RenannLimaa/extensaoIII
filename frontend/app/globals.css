@@ -589,10 +589,13 @@ body::before {
 
 .workspace {
   display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr var(--inspector-w);
+  grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
   background: var(--bg);
   color: var(--text-primary);
+}
+.workspace.sidebar-collapsed {
+  grid-template-columns: 52px 1fr;
 }
 
 /* ---- Sidebar esquerda (historico + navegacao) ---- */
@@ -601,11 +604,46 @@ body::before {
   background: var(--bg-soft);
   display: flex; flex-direction: column;
   min-width: 0;
+  width: var(--sidebar-w);
+  transition: width 0.2s ease;
+}
+.ws-sidebar.is-collapsed {
+  width: 52px;
+}
+.ws-sidebar.is-collapsed .ws-sidebar-search,
+.ws-sidebar.is-collapsed .ws-nav-label,
+.ws-sidebar.is-collapsed .ws-sessions,
+.ws-sidebar.is-collapsed .ws-sidebar-footer > div:first-child {
+  display: none;
+}
+.ws-sidebar.is-collapsed .brand-name,
+.ws-sidebar.is-collapsed .ws-nav-item span:not(.emoji),
+.ws-sidebar.is-collapsed .ws-nav-item .count {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+.ws-sidebar.is-collapsed .ws-nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+.ws-sidebar.is-collapsed .ws-sidebar-header {
+  justify-content: center;
+  padding: 14px 0;
+}
+.ws-sidebar.is-collapsed .ws-sidebar-footer {
+  justify-content: center;
+  padding: 12px 0;
+  gap: 0;
+}
+.ws-sidebar.is-collapsed .ws-nav {
+  padding: 0 4px;
 }
 .ws-sidebar-header {
   padding: 14px 16px;
   display: flex; align-items: center; gap: 10px;
   border-bottom: 1px solid var(--border-subtle);
+  position: relative;
 }
 .ws-sidebar-search {
   margin: 12px 16px;
@@ -1200,8 +1238,19 @@ body::before {
 
 /* ---- Responsivo ---- */
 @media (max-width: 1180px) {
-  .workspace { grid-template-columns: var(--sidebar-w) 1fr; }
-  .ws-inspector { display: none; }
+  .workspace { grid-template-columns: 52px 1fr; }
+  .ws-sidebar { width: 52px; }
+  .ws-sidebar .ws-sidebar-search,
+  .ws-sidebar .ws-nav-label,
+  .ws-sidebar .ws-sessions,
+  .ws-sidebar .ws-sidebar-footer > div:first-child { display: none; }
+  .ws-sidebar .brand-name,
+  .ws-sidebar .ws-nav-item span:not(.emoji),
+  .ws-sidebar .ws-nav-item .count { width: 0; overflow: hidden; opacity: 0; }
+  .ws-sidebar .ws-nav-item { justify-content: center; padding: 10px 0; }
+  .ws-sidebar .ws-sidebar-header { justify-content: center; padding: 14px 0; }
+  .ws-sidebar .ws-sidebar-footer { justify-content: center; padding: 12px 0; gap: 0; }
+  .ws-sidebar .ws-nav { padding: 0 4px; }
 }
 @media (max-width: 900px) {
   .workspace { grid-template-columns: 1fr; }
