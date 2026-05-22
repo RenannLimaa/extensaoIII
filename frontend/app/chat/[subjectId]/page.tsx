@@ -6,7 +6,6 @@ import { BuildSwitch } from '../../components/chat/BuildSwitch';
 import { CommandPalette } from '../../components/chat/CommandPalette';
 import { Composer } from '../../components/chat/Composer';
 import { HighlightPopover } from '../../components/chat/HighlightPopover';
-import { Inspector } from '../../components/chat/Inspector';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { StudyPlanModal } from '../../components/chat/StudyPlanModal';
 import { TypingIndicator } from '../../components/chat/TypingIndicator';
@@ -51,7 +50,6 @@ export default function ChatPage({ params }: PageProps) {
   const [typing, setTyping] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [askedIds, setAskedIds] = useState<string[]>([]);
-  const [stats, setStats] = useState({ answered: 0, correct: 0 });
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [studyPlanOpen, setStudyPlanOpen] = useState(false);
@@ -130,10 +128,6 @@ export default function ChatPage({ params }: PageProps) {
             createdAt: Date.now(),
           },
         ]);
-        setStats((s) => ({
-          answered: s.answered + 1,
-          correct: s.correct + (ans.correta ? 1 : 0),
-        }));
       } finally {
         setTyping(false);
       }
@@ -450,12 +444,6 @@ export default function ChatPage({ params }: PageProps) {
         <Composer onSend={onSend} onCommand={runCommand} disabled={typing} />
       </section>
 
-      <Inspector
-        subjectId={subjectId}
-        stats={stats}
-        onOpenStudyPlan={() => setStudyPlanOpen(true)}
-        onOpenCommand={() => setCmdOpen(true)}
-      />
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="chat" />
       <StudyPlanModal open={studyPlanOpen} onOpenChange={setStudyPlanOpen} />
