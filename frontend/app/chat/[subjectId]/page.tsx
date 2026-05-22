@@ -340,8 +340,8 @@ export default function ChatPage({ params }: PageProps) {
           <button
             className="icon-btn"
             onClick={() => setSidebarCollapsed((c) => !c)}
-            aria-label={sidebarCollapsed ? 'Expandir sidebar (⌘B)' : 'Recolher sidebar (⌘B)'}
-            title={sidebarCollapsed ? 'Expandir (⌘B)' : 'Recolher (⌘B)'}
+            aria-label={sidebarCollapsed ? 'Expandir sidebar (Cmd/Ctrl+B)' : 'Recolher sidebar (Cmd/Ctrl+B)'}
+            title={sidebarCollapsed ? 'Expandir (Cmd/Ctrl+B)' : 'Recolher (Cmd/Ctrl+B)'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" />

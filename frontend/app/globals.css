@@ -82,6 +82,7 @@
 
   /* Layout */
   --sidebar-w: 280px;
+  --sidebar-collapsed-w: 52px;
   --inspector-w: 320px;
   --topbar-h: 54px;
 }
@@ -595,7 +596,7 @@ body::before {
   color: var(--text-primary);
 }
 .workspace.sidebar-collapsed {
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: var(--sidebar-collapsed-w) 1fr;
 }
 
 /* ---- Sidebar esquerda (historico + navegacao) ---- */
@@ -608,7 +609,7 @@ body::before {
   transition: width 0.2s ease;
 }
 .ws-sidebar.is-collapsed {
-  width: 52px;
+  width: var(--sidebar-collapsed-w);
 }
 .ws-sidebar.is-collapsed .ws-sidebar-search,
 .ws-sidebar.is-collapsed .ws-nav-label,
@@ -1324,8 +1325,8 @@ body::before {
 
 /* ---- Responsivo ---- */
 @media (max-width: 1180px) {
-  .workspace { grid-template-columns: 52px 1fr; }
-  .ws-sidebar { width: 52px; }
+  .workspace { grid-template-columns: var(--sidebar-collapsed-w) 1fr; }
+  .ws-sidebar { width: var(--sidebar-collapsed-w); }
   .ws-sidebar .ws-sidebar-search,
   .ws-sidebar .ws-nav-label,
   .ws-sidebar .ws-sessions,
