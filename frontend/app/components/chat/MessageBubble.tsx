@@ -44,13 +44,15 @@ export function MessageBubble({ message, locked, onChoose, onSuggestion, onCopy 
         )}
 
         {message.question && (
-          <QuestionCard
-            question={message.question}
-            chosen={message.chosen}
-            feedback={message.feedback}
-            locked={locked || Boolean(message.feedback)}
-            onChoose={(l) => onChoose?.(l)}
-          />
+          <div className="msg-question-wrap">
+            <QuestionCard
+              question={message.question}
+              chosen={message.chosen}
+              feedback={message.feedback}
+              locked={locked || Boolean(message.feedback)}
+              onChoose={(l) => onChoose?.(l)}
+            />
+          </div>
         )}
 
         {message.suggestions && message.suggestions.length > 0 && (

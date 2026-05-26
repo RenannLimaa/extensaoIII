@@ -1,35 +1,39 @@
 'use client';
 
-import { notFound, useRouter, useSearchParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BuildSwitch } from '../../components/chat/BuildSwitch';
 import { CommandPalette } from '../../components/chat/CommandPalette';
 import { Composer } from '../../components/chat/Composer';
 import { HighlightPopover } from '../../components/chat/HighlightPopover';
+import { Inspector } from '../../components/chat/Inspector';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { StudyPlanModal } from '../../components/chat/StudyPlanModal';
 import { TypingIndicator } from '../../components/chat/TypingIndicator';
 import { WorkspaceSidebar } from '../../components/chat/WorkspaceSidebar';
 import { useTheme } from '../../components/providers/ThemeProvider';
-import { findBuild, findSubject } from '../../lib/catalog';
-import { llm } from '../../lib/llm';
-import { upsertRecentSession } from '../../lib/sessionStore';
+import {
+  createChat,
+  promptAI,
+  randomQuestion,
+  retrieveAllChats,
+  retrieveMessagesByChat,
+} from '../../lib/backendApi';
+import {
+  clearQuestionCache,
+  currentQuestionIdFromMessages,
+  mapBackendMessages,
+  NO_QUESTIONS_AVAILABLE,
+} from '../../lib/backendChat';
+import { findSubject } from '../../lib/catalog';
+import { subjectToHabilidadeId } from '../../lib/subjectHabilidade';
 import type {
   AlternativeLetter,
-  BuildId,
   ChatMessage,
   Question,
   SmartSuggestion,
   SubjectId,
 } from '../../lib/types';
-import type {
-  CommandActionId,
-  HighlightAction,
-} from '../../lib/llm/llmClient';
-
-function mid() {
-  return `m_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
+import type { CommandActionId, HighlightAction } from '../../lib/llm/llmClient';
 
 type PageProps = {
   params: Promise<{ subjectId: string }>;
@@ -37,20 +41,16 @@ type PageProps = {
 
 export default function ChatPage({ params }: PageProps) {
   const { subjectId: rawSubjectId } = use(params);
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { setTheme, theme } = useTheme();
 
   const subject = findSubject(rawSubjectId);
   if (!subject) notFound();
 
-  const initialBuild = (searchParams.get('build') as BuildId | null) ?? 'teorico';
-  const [buildId, setBuildId] = useState<BuildId>(findBuild(initialBuild) ? initialBuild : 'teorico');
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typing, setTyping] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [askedIds, setAskedIds] = useState<string[]>([]);
+  const [chatId, setChatId] = useState<number | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
   const [stats, setStats] = useState({ answered: 0, correct: 0 });
 
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -58,7 +58,11 @@ export default function ChatPage({ params }: PageProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const startedRef = useRef(false);
+  const rawMessagesRef = useRef<Awaited<ReturnType<typeof retrieveMessagesByChat>>>([]);
+
+  const subjectId = subject.id as SubjectId;
+  const habilidadeId = subjectToHabilidadeId(subjectId);
+  const chatName = subject.title;
 
   const scrollToBottom = useCallback(() => {
     const el = scrollerRef.current;
@@ -72,130 +76,157 @@ export default function ChatPage({ params }: PageProps) {
     scrollToBottom();
   }, [messages, typing, scrollToBottom]);
 
-  const subjectId = subject.id as SubjectId;
+  const syncMessages = useCallback(
+    async (raw: Awaited<ReturnType<typeof retrieveMessagesByChat>>) => {
+      rawMessagesRef.current = raw;
+      const mapped = await mapBackendMessages(raw, subjectId);
+      if (mapped.length === 0) {
+        setMessages([
+          {
+            id: 'no-questions',
+            role: 'assistant',
+            content: NO_QUESTIONS_AVAILABLE,
+            createdAt: Date.now(),
+          },
+        ]);
+        setCurrentQuestion(null);
+        return;
+      }
+      setMessages(mapped);
+      const lastQ = [...mapped].reverse().find((m) => m.question)?.question ?? null;
+      setCurrentQuestion(lastQ);
+    },
+    [subjectId],
+  );
 
   useEffect(() => {
-    if (stats.answered <= 0) return;
-    const lastQuestion = [...messages].reverse().find((m) => Boolean(m.question))?.question;
-    const title = lastQuestion?.assunto ?? `${subject.title} · ${findBuild(buildId)?.title ?? 'Sessão'}`;
+    let cancelled = false;
 
-    upsertRecentSession({
-      id: `${subjectId}:${buildId}`,
-      subjectId,
-      buildId,
-      title,
-      answered: stats.answered,
-      correct: stats.correct,
-    });
-  }, [buildId, messages, stats.answered, stats.correct, subject.title, subjectId]);
-
-  /* ---------- Session kickoff ---------- */
-  useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
+    setMessages([]);
+    setChatId(null);
+    setCurrentQuestion(null);
+    setInitError(null);
+    rawMessagesRef.current = [];
+    clearQuestionCache();
 
     (async () => {
       setTyping(true);
       try {
-        const res = await llm.startSession({ subjectId, build: buildId });
-        const greeting: ChatMessage = {
-          id: mid(),
-          role: 'assistant',
-          content: res.greeting,
-          createdAt: Date.now(),
-        };
-        const questionMsg: ChatMessage = {
-          id: mid(),
-          role: 'assistant',
-          content: '',
-          question: res.firstQuestion,
-          createdAt: Date.now(),
-        };
-        setMessages([greeting, questionMsg]);
-        setCurrentQuestion(res.firstQuestion);
-        setAskedIds([res.firstQuestion.id]);
+        const chats = await retrieveAllChats();
+        let chat = chats.find(
+          (c) => c.habilidade === habilidadeId && c.chat_name === chatName,
+        );
+        if (!chat) {
+          chat = await createChat(habilidadeId, chatName);
+        }
+        if (cancelled) return;
+        setChatId(chat.id);
+
+        let raw = await retrieveMessagesByChat(chat.id);
+        if (cancelled) return;
+        if (raw.length === 0) {
+          try {
+            raw = await randomQuestion(chat.id);
+          } catch {
+            raw = [];
+          }
+        }
+        if (cancelled) return;
+        await syncMessages(raw);
+      } catch (err) {
+        if (!cancelled) {
+          setInitError(err instanceof Error ? err.message : 'Falha ao conectar ao backend');
+        }
       } finally {
-        setTyping(false);
+        if (!cancelled) setTyping(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectId, habilidadeId, chatName, syncMessages]);
 
   function patchMessage(id: string, patch: Partial<ChatMessage>) {
     setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   }
 
-  /* ---------- Pergunta e resposta ---------- */
+  const questionIdForPrompt = useCallback(() => {
+    return currentQuestionIdFromMessages(rawMessagesRef.current, subjectId);
+  }, [subjectId]);
+
   const onChoose = useCallback(
     async (messageId: string, question: Question, letter: AlternativeLetter) => {
+      if (!chatId) return;
       patchMessage(messageId, { chosen: letter });
       setTyping(true);
       try {
-        const ans = await llm.answerQuestion({ question, chosen: letter, build: buildId });
+        const qid = Number(question.id) || questionIdForPrompt();
+        const raw = await promptAI(chatId, qid, `Alternativa ${letter}`);
+        await syncMessages(raw);
+        const alt = question.alternativas.find((a) => a.letra === letter);
+        const correta = Boolean(alt?.correta);
         patchMessage(messageId, {
           chosen: letter,
-          feedback: { correta: ans.correta, explicacao: ans.explicacao },
-        });
-        setMessages((ms) => [
-          ...ms,
-          {
-            id: mid(),
-            role: 'assistant',
-            content: ans.feedback,
-            suggestions: ans.suggestions,
-            createdAt: Date.now(),
+          feedback: {
+            correta,
+            explicacao: correta ? 'Resposta correta.' : 'Resposta incorreta.',
           },
-        ]);
+        });
         setStats((s) => ({
           answered: s.answered + 1,
-          correct: s.correct + (ans.correta ? 1 : 0),
+          correct: s.correct + (correta ? 1 : 0),
         }));
       } finally {
         setTyping(false);
       }
     },
-    [buildId],
+    [chatId, syncMessages, questionIdForPrompt],
   );
 
-  const askNext = useCallback(
-    async (difficultyHint?: 'facil' | 'media' | 'dificil') => {
+  const askNext = useCallback(async () => {
+    if (!chatId) return;
+    setTyping(true);
+    try {
+      const raw = await randomQuestion(chatId);
+      await syncMessages(raw);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : '';
+      const msg = detail.includes('Nenhuma questão') || detail.includes('matéria')
+        ? NO_QUESTIONS_AVAILABLE
+        : detail || 'Não foi possível carregar uma nova questão.';
+      setMessages((ms) => [
+        ...ms,
+        {
+          id: `sys-${Date.now()}`,
+          role: 'system',
+          content: msg,
+          createdAt: Date.now(),
+        },
+      ]);
+    } finally {
+      setTyping(false);
+    }
+  }, [chatId, syncMessages]);
+
+  const onSend = useCallback(
+    async (text: string) => {
+      if (!chatId) return;
+      if (/^(proxim|next|seguir|vamos)/i.test(text.trim())) {
+        await askNext();
+        return;
+      }
       setTyping(true);
       try {
-        const nxt = await llm.nextQuestion({
-          subjectId,
-          build: buildId,
-          alreadyAskedIds: askedIds,
-          adaptiveHint: difficultyHint ?? 'auto',
-        });
-        if (!nxt.question) {
-          setMessages((ms) => [
-            ...ms,
-            { id: mid(), role: 'assistant', content: nxt.intro, createdAt: Date.now() },
-          ]);
-          setCurrentQuestion(null);
-          return;
-        }
-        setMessages((ms) => [
-          ...ms,
-          { id: mid(), role: 'assistant', content: nxt.intro, createdAt: Date.now() },
-          {
-            id: mid(),
-            role: 'assistant',
-            content: '',
-            question: nxt.question!,
-            createdAt: Date.now(),
-          },
-        ]);
-        setCurrentQuestion(nxt.question);
-        setAskedIds((ids) => [...ids, nxt.question!.id]);
+        const raw = await promptAI(chatId, questionIdForPrompt(), text);
+        await syncMessages(raw);
       } finally {
         setTyping(false);
       }
     },
-    [subjectId, buildId, askedIds],
+    [chatId, askNext, questionIdForPrompt, syncMessages],
   );
 
-  /* ---------- Execucao de comandos (paleta + slashes + suggestions) ---------- */
   const runCommand = useCallback(
     async (actionId: CommandActionId) => {
       if (actionId === 'next-question') {
@@ -210,151 +241,54 @@ export default function ChatPage({ params }: PageProps) {
         setTheme(theme === 'light' ? 'dark' : 'light');
         return;
       }
-
-      setTyping(true);
-      try {
-        const res = await llm.runCommand({
-          actionId,
-          context: { subjectId, question: currentQuestion ?? undefined, build: buildId },
-        });
-        if (res.openModal === 'study-plan') {
-          setStudyPlanOpen(true);
+      if (chatId && currentQuestion) {
+        setTyping(true);
+        try {
+          const qid = Number(currentQuestion.id) || questionIdForPrompt();
+          const raw = await promptAI(chatId, qid, `Comando: ${actionId}`);
+          await syncMessages(raw);
+        } finally {
+          setTyping(false);
         }
-        if (res.sideEffect?.type === 'theme') {
-          setTheme(res.sideEffect.value);
-        }
-        if (res.sideEffect?.type === 'build') {
-          setBuildId(res.sideEffect.value);
-        }
-        if (res.reply) {
-          if (res.reply === '__next__') {
-            await askNext();
-          } else {
-            setMessages((ms) => [
-              ...ms,
-              { id: mid(), role: 'assistant', content: res.reply!, createdAt: Date.now() },
-            ]);
-          }
-        }
-      } finally {
-        setTyping(false);
       }
     },
-    [askNext, buildId, currentQuestion, setTheme, subjectId, theme],
+    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages, setTheme, theme],
   );
 
   const onSuggestion = useCallback(
     async (s: SmartSuggestion) => {
-      switch (s.action) {
-        case 'next':
-          await askNext();
-          return;
-        case 'easier':
-          await askNext('facil');
-          return;
-        case 'harder':
-          await askNext('dificil');
-          return;
-        case 'similar':
-          await runCommand('generate-similar');
-          return;
-        case 'summary':
-          await runCommand('summarize-topic');
-          return;
-        case 'explain-simple':
-          await runCommand('explain-eli5');
-          return;
-        case 'flashcards':
-          await runCommand('flashcards');
-          return;
-        case 'hint':
-          await runCommand('give-hint');
-          return;
-        case 'quiz-topic':
-          await runCommand('quiz-topic');
-          return;
-      }
-    },
-    [askNext, runCommand],
-  );
-
-  /* ---------- Envio de texto livre ---------- */
-  const onSend = useCallback(
-    async (text: string) => {
-      const userMsg: ChatMessage = { id: mid(), role: 'user', content: text, createdAt: Date.now() };
-      setMessages((ms) => [...ms, userMsg]);
-
-      const intent = text.trim().toLowerCase();
-      if (/^(proxim|next|seguir|vamos)/.test(intent)) {
+      if (s.action === 'next' || s.action === 'easier' || s.action === 'harder') {
         await askNext();
         return;
       }
-
-      setTyping(true);
-      try {
-        const res = await llm.freeReply({
-          userMessage: text,
-          subjectId,
-          build: buildId,
-          lastQuestion: currentQuestion ?? undefined,
-        });
-        setMessages((ms) => [
-          ...ms,
-          {
-            id: mid(),
-            role: 'assistant',
-            content: res.reply,
-            suggestions: res.suggestions,
-            createdAt: Date.now(),
-          },
-        ]);
-      } finally {
-        setTyping(false);
+      if (chatId && currentQuestion) {
+        setTyping(true);
+        try {
+          const qid = Number(currentQuestion.id) || questionIdForPrompt();
+          const raw = await promptAI(chatId, qid, s.label);
+          await syncMessages(raw);
+        } finally {
+          setTyping(false);
+        }
       }
     },
-    [askNext, subjectId, buildId, currentQuestion],
+    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages],
   );
 
-  /* ---------- Highlight (selecao de texto) ---------- */
   const onHighlight = useCallback(
     async (selectedText: string, action: HighlightAction) => {
+      if (!chatId) return;
       setTyping(true);
       try {
-        const res = await llm.highlight({ selectedText, action, subjectId, build: buildId });
-        setMessages((ms) => [
-          ...ms,
-          {
-            id: mid(),
-            role: 'assistant',
-            content: `**${res.title}**\n\n${res.body}`,
-            createdAt: Date.now(),
-          },
-        ]);
+        const raw = await promptAI(chatId, questionIdForPrompt(), `[${action}] ${selectedText}`);
+        await syncMessages(raw);
       } finally {
         setTyping(false);
       }
     },
-    [buildId, subjectId],
+    [chatId, questionIdForPrompt, syncMessages],
   );
 
-  /* ---------- Build change ---------- */
-  function handleBuildChange(b: BuildId) {
-    setBuildId(b);
-    const qs = new URLSearchParams(Array.from(searchParams.entries()));
-    qs.set('build', b);
-    router.replace(`/chat/${subjectId}?${qs.toString()}`);
-    setMessages((ms) => [
-      ...ms,
-      {
-        id: mid(),
-        role: 'system',
-        content: `Build alterada para ${findBuild(b)?.title}.`,
-        createdAt: Date.now(),
-      },
-    ]);
-  }
-
-  /* ---------- Keyboard shortcuts globais ---------- */
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
@@ -373,23 +307,17 @@ export default function ChatPage({ params }: PageProps) {
         setTheme(theme === 'light' ? 'dark' : 'light');
         return;
       }
-      // Cmd+Shift+P → study plan
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         setStudyPlanOpen(true);
         return;
       }
       if (typingInField) return;
-      if (e.key === 'j' || e.key === 'J') {
-        askNext();
-      }
-      if (e.key === '.') {
-        void runCommand('give-hint');
-      }
+      if (e.key === 'j' || e.key === 'J') askNext();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [askNext, runCommand, setTheme, theme]);
+  }, [askNext, setTheme, theme]);
 
   const activeQuestionMessageId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -403,7 +331,6 @@ export default function ChatPage({ params }: PageProps) {
     <div className={`workspace ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <WorkspaceSidebar
         activeSubjectId={subjectId}
-        buildId={buildId}
         onOpenCommand={() => setCmdOpen(true)}
         collapsed={sidebarCollapsed}
       />
@@ -413,8 +340,8 @@ export default function ChatPage({ params }: PageProps) {
           <button
             className="icon-btn"
             onClick={() => setSidebarCollapsed((c) => !c)}
-            aria-label={sidebarCollapsed ? 'Expandir sidebar (⌘B)' : 'Recolher sidebar (⌘B)'}
-            title={sidebarCollapsed ? 'Expandir (⌘B)' : 'Recolher (⌘B)'}
+            aria-label={sidebarCollapsed ? 'Expandir sidebar (Cmd/Ctrl+B)' : 'Recolher sidebar (Cmd/Ctrl+B)'}
+            title={sidebarCollapsed ? 'Expandir (Cmd/Ctrl+B)' : 'Recolher (Cmd/Ctrl+B)'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -423,36 +350,29 @@ export default function ChatPage({ params }: PageProps) {
           </button>
           <div className="ws-breadcrumb">
             <span>{subject.icon}</span>
-            <span>{subject.title}</span>
-            <span className="sep">›</span>
-            <span className="cur">Sessão · {findBuild(buildId)?.title}</span>
+            <span className="cur">{subject.title}</span>
           </div>
-          <BuildSwitch value={buildId} onChange={handleBuildChange} />
           <div className="ws-topbar-actions">
-            <button
-              className="icon-btn"
-              onClick={() => setCmdOpen(true)}
-              aria-label="Abrir paleta (Cmd+K)"
-              title="Paleta de comandos (⌘K)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <button className="icon-btn" onClick={() => setCmdOpen(true)} aria-label="Paleta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
-            <button
-              className="icon-btn"
-              onClick={() => setStudyPlanOpen(true)}
-              aria-label="Plano de estudos (Cmd+Shift+P)"
-              title="Gerar plano de estudos (⌘⇧P)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <button className="icon-btn" onClick={() => setStudyPlanOpen(true)} aria-label="Plano">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <path d="M16 2v4M8 2v4M3 10h18" />
               </svg>
             </button>
           </div>
         </div>
+
+        {initError && (
+          <div style={{ padding: '12px 16px', color: 'var(--danger, #e11)', fontSize: '0.9rem' }}>
+            {initError}
+          </div>
+        )}
 
         <div className="ws-scroll" ref={scrollerRef}>
           <div className="ws-stream">
@@ -481,12 +401,25 @@ export default function ChatPage({ params }: PageProps) {
           </div>
         </div>
 
-        <Composer onSend={onSend} onCommand={runCommand} disabled={typing} />
+        <Composer onSend={onSend} onCommand={runCommand} disabled={typing || !chatId} />
       </section>
 
+      <Inspector
+        subjectId={subjectId}
+        stats={stats}
+        onOpenStudyPlan={() => setStudyPlanOpen(true)}
+        onOpenCommand={() => setCmdOpen(true)}
+      />
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="chat" />
-      <StudyPlanModal open={studyPlanOpen} onOpenChange={setStudyPlanOpen} />
+      <StudyPlanModal
+        open={studyPlanOpen}
+        onOpenChange={setStudyPlanOpen}
+        chatId={chatId}
+        questionId={questionIdForPrompt()}
+        subjectId={subjectId}
+        habilidadeId={habilidadeId}
+      />
       <HighlightPopover containerRef={scrollerRef} onAction={onHighlight} />
     </div>
   );

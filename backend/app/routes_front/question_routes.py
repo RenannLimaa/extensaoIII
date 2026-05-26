@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.question import QuestionSchema
 from app.schemas.alternativa import AlternativaSchema
 from app.schemas.chatmessage import ChatMessageSchema
-from app.routes_back.questionDB_routes import getQuestionByID
-import random
+from app.routes_back.questionDB_routes import getQuestionByID, getRandomQuestionByHabilidade
+from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.chatmessageDB_routes import createChatMessage
 from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 
@@ -30,13 +30,21 @@ def randomQuestion(chat_id: int):
 
         Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
     """
-    id_aleatorio = random.randint(1, 7)
-    question = getQuestionByID(id_aleatorio)
+    chat = getChatByID(chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat não encontrado")
+    existing = getChatsMessagesByChat(chat_id) or []
+    used_ids = [m.question_id for m in existing if m.question_id is not None]
+    question = getRandomQuestionByHabilidade(chat.habilidade, exclude_ids=used_ids)
     if not question:
-        raise HTTPException(status_code=500, detail="Algum problema ocorreu ao escolher a questão")
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhuma questão disponível para esta matéria no momento",
+        )
     question_text = question.enunciado + "\n"
     for alt in question.alternativas:
         question_text += "\n" + str(alt.letra) + ") " + str(alt.texto)
+    id_aleatorio = question.id
     createChatMessage(chat_id, "llm", question_text, id_aleatorio)
     chat_messages = getChatsMessagesByChat(chat_id)
-    return chat_messages
+    return chat_messages if chat_messages is not None else []

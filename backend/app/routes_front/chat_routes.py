@@ -13,7 +13,7 @@ from app.routes_back.llm_routes import getAnswertheQuery
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-@router.get("/}")
+@router.get("/")
 def retrieveAllChats():
     """
         Chama função que retorna a lista de todos os ChatSchemas do user ativo no formato {"chats": [ChatSchema1, ChatSchema2, ...]}.
@@ -21,7 +21,7 @@ def retrieveAllChats():
          Ex de uso: POST http://127.0.0.1:8000/chat/
     """
     chats = getChatsByUser(4) #por enquanto usa o user 4 sempre
-    return chats
+    return chats if chats is not None else []
 
 @router.get("/{chat_id}")
 def retrieveMessagesByChat(chat_id: int):
@@ -44,7 +44,7 @@ def retrieveMessagesByChat(chat_id: int):
             ]
         """
     messages = getChatsMessagesByChat(chat_id)
-    return messages
+    return messages if messages is not None else []
 
 @router.post("/{habilidade_id}")
 def createChat(habilidade_id: int, item: str = Body()):
@@ -103,4 +103,4 @@ def promptAI(chat_id: int, question_id: int, texto: str):
     createChatMessage(chat_id, "user", texto, question_id)
     createChatMessage(chat_id, "llm", resposta, question_id)
     chat_messages = getChatsMessagesByChat(chat_id)
-    return chat_messages
+    return chat_messages if chat_messages is not None else []

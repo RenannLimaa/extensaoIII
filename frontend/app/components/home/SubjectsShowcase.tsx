@@ -4,13 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { SUBJECTS } from '../../lib/catalog';
 
-type Props = {
-  buildId?: string;
-};
-
-export function SubjectsShowcase({ buildId }: Props) {
-  const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
-
+export function SubjectsShowcase() {
   return (
     <section className="section" style={{ paddingTop: 20 }}>
       <div className="container">
@@ -39,7 +33,7 @@ export function SubjectsShowcase({ buildId }: Props) {
               transition={{ delay: i * 0.06 }}
             >
               <Link
-                href={`/chat/${s.id}${qs}`}
+                href={`/chat/${s.id}`}
                 style={{
                   display: 'block',
                   padding: 22,

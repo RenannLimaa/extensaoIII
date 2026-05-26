@@ -28,7 +28,7 @@ export function Hero() {
           </p>
 
           <div className="hero-ctas">
-            <Link href="/chat/matematica?build=teorico" className="btn btn-lg btn-primary">
+            <Link href="/chat/matematica" className="btn btn-lg btn-primary">
               Começar sessão grátis →
             </Link>
             <a href="#features" className="btn btn-lg btn-ghost">
