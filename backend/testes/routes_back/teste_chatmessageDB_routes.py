@@ -21,7 +21,7 @@ def teste_createChatMessage():
     chat_message = {
         "chat_id": 5,
         "author": 'llm',
-        "texto": "Alternativa incorreta, a alternativa correta é o item E!",
+        "texto": question,
         "question_id": 2,
     }
 
@@ -43,10 +43,8 @@ def teste_deleteChatMessage(chat_id):
 
 
 if __name__ == "__main__":
-    #chat_id = 4
+    chat_id = 4
 
-    #teste_createChatMessage()
-    for chat_id in range(25, 27):
-        deleteChatMessage(chat_id)
+    teste_createChatMessage()
     
     # chat_message_schema.texto = 'mensagem3_atualizada'
