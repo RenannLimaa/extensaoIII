@@ -9,3 +9,6 @@ uv run -m testes.routes_back.teste_userDB_routes
 
 uv run -m testes.routes_back.teste_chatDB_routes
 uv run -m testes.routes_back.teste_chatmessageDB_routes
+
+# LLM
+uv run -m testes.routes_back.teste_llm_routes

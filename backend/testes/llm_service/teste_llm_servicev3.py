@@ -8,7 +8,7 @@ from testes.llm_service.queries import query1
 history = None
 
 model = LLMService(
-    'google', 
+    'google',
     history = history
 )
 
