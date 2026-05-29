@@ -4,8 +4,7 @@ from app.services.llm_service import LLMService
 from app.routes_back.chatmessageDB_routes import getMessagesRelatedToQuestion
 from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.habilcompDB_routes import getHabilidadeByID
-from app.routes_back.questionDB_routes import getQuestionByID
-from testes.llm_service.prompts import prompt4 as prompt1, prompt5 as prompt2
+from testes.llm_service.prompts import prompt1, prompt2
 
 
 def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status=0) -> str:
@@ -21,22 +20,15 @@ def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status=0)
 
     history: list[tuple[str, str]] = []
     if question_id:
-        question = getQuestionByID(question_id)
-        if question:
-
-            # Gerando o enunciado da questão + Alternativas + Resposta correta
-            question_text = question.enunciado + "\n" + "\n".join([alternativa.letra + ") " + alternativa.texto for alternativa in question.alternativas])
-            question_text = question_text + "\nAlternativa correta: " + str(question.resposta_correta)
-
-            _, history_messages = getMessagesRelatedToQuestion(chat_id, question_id)
-
+        question_message, history_messages = getMessagesRelatedToQuestion(chat_id, question_id)
+        if question_message:
+            question_text = question_message.texto
             history = [
                 ("user" if msg.author == "user" else "assistant", msg.texto)
                 for msg in history_messages[-6:]
             ]
-
         else:
-            question_text = "Questão não encontrada"
+            question_text = "Questão em andamento."
     else:
         question_text = "Sessão de estudos ENEM — o aluno ainda não abriu uma questão específica."
 
