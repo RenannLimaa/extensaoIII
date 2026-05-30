@@ -9,7 +9,7 @@ from app.routes_back.chatDB_routes import updateChat
 from app.routes_back.chatDB_routes import deleteChat as deleteChatInDB
 from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 from app.routes_back.chatmessageDB_routes import createChatMessage
-from app.routes_back.llm_routes import getAnswertheQuery
+from app.routes_back.llm_routes import getAnswertheQuery, getAnswertheQueryEssay
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -102,5 +102,22 @@ def promptAI(chat_id: int, question_id: int, texto: str):
         raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
     createChatMessage(chat_id, "user", texto, question_id)
     createChatMessage(chat_id, "llm", resposta, question_id)
+    chat_messages = getChatsMessagesByChat(chat_id)
+    return chat_messages if chat_messages is not None else []
+
+@router.put("/prompt/{chat_id}/red/{essay_id}/{texto}")
+def promptAIred(chat_id: int, essay_id: int, texto: str):
+    """
+        Chama função que manda prompt no chat, requer id do chat, da redacao e texto. Retorna a lista atualizada de ChatMessageSchemas desse chat caso tenha sucesso.
+
+        Ex de uso: PUT http://127.0.0.1:8000/chat/prompt/4/34/Olá
+
+        Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
+    """
+    resposta = getAnswertheQueryEssay(chat_id, essay_id, texto)
+    if not resposta:
+        raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
+    createChatMessage(chat_id, "user", texto, essay_id=essay_id)
+    createChatMessage(chat_id, "llm", resposta, essay_id=essay_id)
     chat_messages = getChatsMessagesByChat(chat_id)
     return chat_messages if chat_messages is not None else []

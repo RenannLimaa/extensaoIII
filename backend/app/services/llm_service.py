@@ -80,9 +80,14 @@ class LLMService:
 
     def generate_agent_prompt(self, knowledge_area: str, question: str):
         return self.prompt.format(knowledge_area=knowledge_area, question=question)
+    
+    def generate_agent_prompt_red(self, theme: str, essay: str):
+        return self.prompt.format(theme=theme, essay=essay)
 
     async def generate_answer(self, context: str, query: str) -> AsyncGenerator[str, None]:
         history = self.history
+
+        print(history)
 
         # Usamos astream para obter os tokens conforme são gerados
         full_content = ""
@@ -109,6 +114,21 @@ class LLMService:
     ) -> AsyncGenerator[str, None]:
         context = self.generate_agent_prompt(knowledge_area, question)
         
+        # Repassa o gerador assíncrono
+        async for token in self.generate_answer(context, query):
+            yield token
+
+    async def call_agent_red(
+        self,
+        theme: str,
+        essay: str,
+        query: str,
+    ) -> AsyncGenerator[str, None]:
+        context = self.generate_agent_prompt_red(theme, essay)
+   
+        print(context)
+        print(query)
+
         # Repassa o gerador assíncrono
         async for token in self.generate_answer(context, query):
             yield token
