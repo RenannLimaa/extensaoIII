@@ -5,6 +5,7 @@ from app.services.llm_service import LLMService
 from app.routes_back.chatmessageDB_routes import getMessagesRelatedToQuestion
 from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.habilcompDB_routes import getHabilidadeByID
+from testes.llm_service.prompts import prompt1, prompt2
 
 
 def _is_hint_request(query: str) -> bool:
