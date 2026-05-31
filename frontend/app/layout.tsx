@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './components/providers/ThemeProvider';
-import { BackendUserProvider } from './lib/useBackendUser';
 
 const sans = Inter({
   subsets: ['latin'],
@@ -35,7 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} ${mono.variable}`}>
         <ThemeProvider>
-          <BackendUserProvider>{children}</BackendUserProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>

@@ -28,7 +28,7 @@ def getChatsMessagesByChat(chat_id: int):
                 chat_id=row.get('chat_id'),
                 author=row.get('author'),
                 texto=row.get('texto'),
-                timestamp=row.get('timestamp'),
+                timestamp=str(row.get('timestamp')),
                 question_id=row.get('question_id')
             )
             messages.append(message)
@@ -124,7 +124,7 @@ def getMessagesRelatedToQuestion(chat_id: int, question_id: int) -> tuple[ChatMe
             chat_id=row.get('chat_id'),
             author=row.get('author'),
             texto=row.get('texto'),
-            timestamp=row.get('timestamp'),
+            timestamp=str(row.get('timestamp')),
             question_id=row.get('question_id')
         )
         messages.append(message)

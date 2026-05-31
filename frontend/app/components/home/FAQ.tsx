@@ -8,8 +8,8 @@ const qa = [
     a: 'Sim — enquanto o protótipo estiver público. O plano é manter um tier gratuito bem generoso mesmo depois do lançamento.',
   },
   {
-    q: 'Preciso criar conta?',
-    a: 'Não. Você pode começar uma sessão direto, sem cadastro. Conta entra em cena quando você quiser salvar progresso entre dispositivos.',
+    q: 'Posso começar imediatamente?',
+    a: 'Sim. Você pode abrir uma sessão direto e usar o chat sem passos extras antes de estudar.',
   },
   {
     q: 'As questões são reais do ENEM?',

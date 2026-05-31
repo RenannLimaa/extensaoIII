@@ -56,7 +56,10 @@ export function MessageContent({ content }: Props) {
         if (b.kind === 'callout') {
           return (
             <Callout key={i} variant={b.variant}>
-              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[[rehypeKatex, { strict: false }]]}
+              >
                 {b.text}
               </ReactMarkdown>
             </Callout>
@@ -66,7 +69,7 @@ export function MessageContent({ content }: Props) {
           <ReactMarkdown
             key={i}
             remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
+            rehypePlugins={[[rehypeKatex, { strict: false }]]}
             components={components}
           >
             {b.text}

@@ -1,15 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
-import { useBackendUser } from '../../lib/useBackendUser';
-import { AuthModal } from '../user/AuthModal';
 
 export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
   const { theme, toggle } = useTheme();
-  const { user, logout, loading } = useBackendUser();
-  const [authOpen, setAuthOpen] = useState(false);
 
   return (
     <header className="landing-nav">
@@ -61,34 +56,11 @@ export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
               </svg>
             )}
           </button>
-          {user ? (
-            <>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{user.username}</span>
-              <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
-                Sair
-              </button>
-              <Link href="/chat/matematica" className="btn btn-primary">
-                Ir ao chat →
-              </Link>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setAuthOpen(true)}
-                disabled={loading}
-              >
-                Entrar
-              </button>
-              <Link href="/chat/matematica" className="btn btn-primary">
-                Começar grátis →
-              </Link>
-            </>
-          )}
+          <Link href="/chat/matematica" className="btn btn-primary">
+            Ir ao chat →
+          </Link>
         </div>
       </div>
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </header>
   );
 }
