@@ -23,6 +23,7 @@ export type ChatMessageSchema = {
   texto: string;
   timestamp: string;
   question_id: number | null;
+  essay_id: number | null;
 };
 
 export type AlternativaSchema = {
@@ -40,6 +41,12 @@ export type QuestionSchema = {
   image: string | null;
   dificuldade: number;
 };
+
+export type EssaySchema = {
+  id: number,
+  theme: number,
+  text: string
+}
 
 export type MessageResponse = { message: string };
 

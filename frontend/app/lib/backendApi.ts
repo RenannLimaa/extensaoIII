@@ -2,6 +2,7 @@ import type {
   ChatMessageSchema,
   ChatSchema,
   ChatsResponse,
+  EssaySchema,
   MessageResponse,
   QuestionSchema,
 } from './backendTypes';
@@ -108,4 +109,38 @@ export async function randomQuestion(chatId: number) {
     method: 'GET',
   });
   return asList(data);
+}
+
+/* ---------- Redação ---------- */
+
+/** GET /themes/random/{chat_id} */
+export async function randomTheme(chatId: number) {
+  const data = await request<ChatMessageSchema[] | null>(`/themes/random/${chatId}`, {
+    method: 'GET',
+  });
+  return asList(data);
+}
+
+/** GET /essays/{id} */
+export function retrieveEssayById(id: number) {
+  return request<EssaySchema>(`/essays/${id}`, { method: 'GET' });
+}
+
+/** PUT /chat/prompt/{chat_id}/red/{essay_id}/{texto} */
+export async function promptAIred(chatId: number, essayId: number, texto: string) {
+  const encoded = encodeURIComponent(texto);
+  const data = await request<ChatMessageSchema[] | null>(
+    `/chat/prompt/${chatId}/red/${essayId}/${encoded}`,
+    { method: 'PUT' },
+  );
+  return asList(data);
+}
+
+/** PUT /essays/{id} */
+export async function updateEssayText(essayId: number, text: string) {
+  return request(`/essays/${essayId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(text),
+  });
 }
