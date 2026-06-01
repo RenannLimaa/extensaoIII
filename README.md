@@ -37,6 +37,16 @@ Run the backend
 uv run uvicorn main:app --reload
 ```
 
+### Using Docker
+```
+docker compose up --build
+```
+
+After running this command the first time, you can run the command below:
+```
+docker compose up
+```
+
 Access `http://localhost:8000/` and check if the returned message is `Hello World`. If it is, the project was correctly set up. 
 
 # Running the frontend
