@@ -86,12 +86,15 @@ export function deleteChat(chatId: number) {
   return request<MessageResponse>(`/chat/${chatId}`, { method: 'DELETE' });
 }
 
-/** PUT /chat/prompt/{chat_id}/{question_id}/{texto} */
+/** PUT /chat/prompt/{chat_id}/{question_id} */
 export async function promptAI(chatId: number, questionId: number, texto: string) {
-  const encoded = encodeURIComponent(texto);
   const data = await request<ChatMessageSchema[] | null>(
-    `/chat/prompt/${chatId}/${questionId}/${encoded}`,
-    { method: 'PUT' },
+    `/chat/prompt/${chatId}/${questionId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    },
   );
   return asList(data);
 }
@@ -126,12 +129,15 @@ export function retrieveEssayById(id: number) {
   return request<EssaySchema>(`/essays/${id}`, { method: 'GET' });
 }
 
-/** PUT /chat/prompt/{chat_id}/red/{essay_id}/{texto} */
+/** PUT /chat/prompt/{chat_id}/red/{essay_id} */
 export async function promptAIred(chatId: number, essayId: number, texto: string) {
-  const encoded = encodeURIComponent(texto);
   const data = await request<ChatMessageSchema[] | null>(
-    `/chat/prompt/${chatId}/red/${essayId}/${encoded}`,
-    { method: 'PUT' },
+    `/chat/prompt/${chatId}/red/${essayId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    },
   );
   return asList(data);
 }

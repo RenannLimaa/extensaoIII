@@ -8,8 +8,9 @@ from app.routes_back.chatmessageDB_routes import getMessagesRelatedToEssay, getM
 from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.habilcompDB_routes import getHabilidadeByID
 from app.routes_back.questionDB_routes import getQuestionByID
-from testes.llm_service.prompts import prompt4 as prompt1, prompt5 as prompt2, prompt6
 
+# from testes.llm_service.prompts import prompt4 as prompt1, prompt5 as prompt2, prompt6
+from testes.llm_service.prompts import prompt1, prompt2, prompt6
 
 def _is_hint_request(query: str) -> bool:
     normalized = query.strip().lower()
@@ -23,7 +24,7 @@ def _trim_hint_response(text: str) -> str:
     return short_text[:260].rstrip(' ,;:-')
 
 
-def getAnswertheQuery(chat_id: int, question_id: int, query: str) -> str:
+def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status: int = 1) -> str:
     """
     Chama a LLM (Gemini via LangChain) e retorna o texto completo da resposta.
     Usado por PUT /chat/prompt/{chat_id}/{question_id}/{texto}.
@@ -80,7 +81,12 @@ def getAnswertheQuery(chat_id: int, question_id: int, query: str) -> str:
     """
         llm_service = LLMService("google", 0, prompt=hint_prompt, history=history[-4:])
     else:
-        llm_service = LLMService("google", 0, history=history)
+        if chat_status == 0:
+            prompt = prompt1
+        elif chat_status == 1:
+            prompt = prompt2
+
+        llm_service = LLMService("google", 0, prompt=prompt, history=history)
 
     async def collect() -> str:
         parts: list[str] = []
