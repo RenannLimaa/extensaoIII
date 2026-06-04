@@ -98,12 +98,9 @@ def promptAI(chat_id: int, question_id: int, texto: str = Body(..., embed=True))
         Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
     """
     resposta = getAnswertheQuery(chat_id, question_id, texto)
-    print("Chegou aqui 0")
     if not resposta:
         raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
-    print("Chegou aqui 1")
     createChatMessage(chat_id, "user", texto, question_id)
-    print("Chegou aqui 2")
     createChatMessage(chat_id, "llm", resposta, question_id)
     chat_messages = getChatsMessagesByChat(chat_id)
     return chat_messages if chat_messages is not None else []
