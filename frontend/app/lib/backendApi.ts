@@ -4,13 +4,12 @@ import type {
   ChatsResponse,
   MessageResponse,
   QuestionSchema,
-  UserSchema,
 } from './backendTypes';
 
 /** Proxy same-origin via next.config rewrites — evita CORS e "Failed to fetch" se o back estiver no ar. */
 const API_BASE =
   typeof window !== 'undefined'
-    ? '/backend-api'
+    ? '/api'
     : (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000');
 
 function asList<T>(data: T[] | null | undefined): T[] {
@@ -47,49 +46,11 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
-/* ---------- User ---------- */
-
-/** GET /user/login/ — corpo {"email","password"} */
-export function userLogin(email: string, password: string) {
-  return request<UserSchema>('/user/login/', {
-    method: 'GET',
-    json: { email, password },
-  });
-}
-
-/** GET /user/logout/ */
-export function userLogout() {
-  return request<MessageResponse>('/user/logout/', { method: 'GET' });
-}
-
-/** GET /user/ */
-export function userInfo() {
-  return request<UserSchema>('/user/', { method: 'GET' });
-}
-
-/** POST /user/ — corpo {"username","email","password"} */
-export function userRegister(username: string, email: string, password: string) {
-  return request<UserSchema>('/user/', {
-    method: 'POST',
-    json: { username, email, password },
-  });
-}
-
-/** PUT /user/ — corpo UserSchema */
-export function userUpdate(user: UserSchema) {
-  return request<MessageResponse>('/user/', { method: 'PUT', json: user });
-}
-
-/** DELETE /user/ */
-export function userDelete() {
-  return request<MessageResponse>('/user/', { method: 'DELETE' });
-}
-
 /* ---------- Chat ---------- */
 
 /** GET /chat/ */
 export async function retrieveAllChats(): Promise<ChatSchema[]> {
-  const data = await request<ChatSchema[] | ChatsResponse | null>('/chat/', { method: 'GET' });
+  const data = await request<ChatSchema[] | ChatsResponse | null>('/chat', { method: 'GET' });
   if (data == null) return [];
   if (Array.isArray(data)) return data;
   return asList(data.chats);
@@ -136,9 +97,9 @@ export async function promptAI(chatId: number, questionId: number, texto: string
 
 /* ---------- Questions ---------- */
 
-/** GET /questions/{id} (routes_front; doc menciona /chat/questions/) */
+/** GET /chat/questions/{id} */
 export function retrieveQuestionById(id: number) {
-  return request<QuestionSchema>(`/questions/${id}`, { method: 'GET' });
+  return request<QuestionSchema>(`/chat/questions/${id}`, { method: 'GET' });
 }
 
 /** GET /questions/random/{chat_id} */

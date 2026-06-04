@@ -78,30 +78,23 @@ export function Features() {
           </motion.article>
 
           <motion.article className="bento-cell span-3" {...fade}>
-            <div className="cell-eyebrow">Insights em tempo real</div>
-            <h3>Veja no que você trava de verdade.</h3>
+            <div className="cell-eyebrow">Atalhos do chat</div>
+            <h3>Faça mais sem tirar as mãos do fluxo.</h3>
             <p>
-              Seu painel lateral acompanha acurácia, streak, tópicos fortes e fracos — e sugere o próximo passo
-              sem você precisar pensar.
+              Comandos rápidos para abrir a paleta, avançar a sessão e alternar o foco sem sair da conversa.
+              Menos cliques, mais estudo.
             </p>
             <div className="cell-visual">
-              <div className="fi-insights" style={{ padding: '20px 28px 24px' }}>
-                <div className="fi-insight-row">
-                  <span>Probabilidade</span>
-                  <div className="bar">
-                    <div className="bar-fill" style={{ width: '92%' }} />
+              <div style={{ padding: '20px 28px 24px' }}>
+                <div className="fi-slash">
+                  <div>
+                    <span className="cmd">⌘K</span> — abrir comandos
                   </div>
-                </div>
-                <div className="fi-insight-row">
-                  <span>Funções</span>
-                  <div className="bar">
-                    <div className="bar-fill" style={{ width: '74%' }} />
+                  <div>
+                    <span className="cmd">J</span> — próxima questão
                   </div>
-                </div>
-                <div className="fi-insight-row">
-                  <span>Geometria</span>
-                  <div className="bar">
-                    <div className="bar-fill" style={{ width: '38%', background: 'linear-gradient(135deg, #b23a2c, #d96555)' }} />
+                  <div>
+                    <span className="cmd">⌘B</span> — recolher sidebar
                   </div>
                 </div>
               </div>
