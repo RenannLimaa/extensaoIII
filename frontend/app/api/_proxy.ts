@@ -44,7 +44,10 @@ export async function proxyRequest(request: Request, backendPath: string) {
   };
 
   if (method !== 'GET' && method !== 'HEAD') {
-    init.body = await request.arrayBuffer();
+    const buf = await request.arrayBuffer();
+    if (buf && buf.byteLength && buf.byteLength > 0) {
+      init.body = buf;
+    }
   }
 
   const response = await fetch(backendUrl(backendPath), init);
