@@ -577,6 +577,7 @@ body::before {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text-primary);
 }
@@ -590,6 +591,7 @@ body::before {
   background: var(--bg-soft);
   display: flex; flex-direction: column;
   min-width: 0;
+  min-height: 0;
   width: var(--sidebar-w);
   transition: width 0.2s ease;
 }
@@ -671,7 +673,7 @@ body::before {
   color: var(--text-muted);
 }
 
-.ws-sessions { padding: 4px 8px 16px; flex: 1; overflow-y: auto; }
+.ws-sessions { padding: 4px 8px 16px; flex: 1; min-height: 0; overflow-y: auto; }
 .ws-session {
   display: flex; flex-direction: column; gap: 2px;
   padding: 8px 10px; border-radius: 6px;
@@ -711,6 +713,7 @@ body::before {
 .ws-main {
   display: flex; flex-direction: column;
   min-width: 0; min-height: 0;
+  overflow: hidden;
   position: relative;
 }
 .ws-topbar {
