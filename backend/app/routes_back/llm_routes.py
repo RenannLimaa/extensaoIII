@@ -86,7 +86,7 @@ def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status: i
         elif chat_status == 1:
             prompt = prompt2
 
-        llm_service = LLMService("meta", 0, prompt=prompt, history=history)
+        llm_service = LLMService("google", 0, prompt=prompt, history=history)
 
     async def collect() -> str:
         parts: list[str] = []

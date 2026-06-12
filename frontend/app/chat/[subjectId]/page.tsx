@@ -476,7 +476,7 @@ export default function ChatPage({ params }: PageProps) {
   const runCommand = useCallback(
     async (actionId: CommandActionId, habilidade: string = '') => {
       if (actionId === 'generate-similar') {
-        await askNext();
+        await (habilidade === 'redacao' ? askNextTheme() : askNext());
         return;
       }
       if (actionId === 'flashcards') {
@@ -484,7 +484,6 @@ export default function ChatPage({ params }: PageProps) {
         return;
       }
       if (actionId === 'next-question') {
-        console.log(habilidade)
         await (habilidade === 'redacao' ? askNextTheme() : askNext());
         return;
       }
@@ -496,26 +495,33 @@ export default function ChatPage({ params }: PageProps) {
         setTheme(theme === 'light' ? 'dark' : 'light');
         return;
       }
-      if (chatId && currentQuestion) {
-        setTyping(true);
-        try {
-          const qid = Number(currentQuestion.id) || questionIdForPrompt();
-          const commandText =
-            actionId === 'give-hint'
-              ? 'Gerar dica discreta'
-              : actionId === 'summarize-topic'
+      const essayId = currentEssayIdRef.current;
+      if (!chatId || (!currentQuestion && !essayId)) return;
+
+      setTyping(true);
+      try {
+        const commandText =
+          actionId === 'give-hint'
+            ? 'Gerar dica discreta'
+            : actionId === 'summarize-topic'
               ? 'Resumo do tópico'
               : actionId === 'explain-eli5'
-              ? 'Versão Simplificada'
-              : `Comando: ${actionId}`;
+                ? 'Versão Simplificada'
+                : `Comando: ${actionId}`;
+
+        if (currentQuestion) {
+          const qid = Number(currentQuestion.id) || questionIdForPrompt();
           const raw = await promptAI(chatId, qid, commandText, chatStatus);
           await syncMessages(raw);
-        } finally {
-          setTyping(false);
+        } else if (essayId) {
+          const raw = await promptAIred(chatId, essayId, commandText);
+          await syncEssayMessages(raw);
         }
+      } finally {
+        setTyping(false);
       }
     },
-    [askNext, chatId, chatStatus, currentQuestion, questionIdForPrompt, syncMessages, setTheme, theme],
+    [askNext, chatId, chatStatus, currentQuestion, questionIdForPrompt, syncMessages, syncEssayMessages, setTheme, theme],
   );
 
   const onSuggestion = useCallback(
@@ -693,12 +699,13 @@ export default function ChatPage({ params }: PageProps) {
 
       <Inspector onOpenStudyPlan={() => setStudyPlanOpen(true)} />
 
-      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="chat" />
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={(id) => runCommand(id, subjectId)} scope="chat" />
       <StudyPlanModal
         open={studyPlanOpen}
         onOpenChange={setStudyPlanOpen}
         chatId={chatId}
         questionId={questionIdForPrompt()}
+        essayId={currentEssayIdRef.current}
         subjectId={subjectId}
         habilidadeId={habilidadeId}
       />
@@ -708,7 +715,9 @@ export default function ChatPage({ params }: PageProps) {
         chatId={chatId}
         chatStatus={chatStatus}
         questionId={questionIdForPrompt()}
+        essayId={currentEssayIdRef.current}
         subjectId={subjectId}
+        habilidadeId={habilidadeId}
       />
       {deleteModalOpen && pendingDeleteChat && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-chat-title">
