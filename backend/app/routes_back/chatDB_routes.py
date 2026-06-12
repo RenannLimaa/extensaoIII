@@ -26,6 +26,7 @@ def getChatByID(id: int):
             user_id=rows[0].get('user_id'),
             habilidade=rows[0].get('habilidade'),
             chat_name=rows[0].get('chat_name'),
+            status=rows[0].get('status'), 
             criado_em=rows[0].get('criado_em'),
             atualizado_em=rows[0].get('atualizado_em'),
         )
@@ -52,6 +53,7 @@ def getChatsByUser(user_id: int):
                 user_id=row.get('user_id'),
                 habilidade=row.get('habilidade'),
                 chat_name=row.get('chat_name'),
+                status=row.get('status'),
                 criado_em=row.get('criado_em'),
                 atualizado_em=row.get('atualizado_em'),
             )
@@ -78,6 +80,7 @@ def createChat(user_id: int, habilidade: int, chat_name: str):
             user_id=rows[0].get('user_id'),
             habilidade=rows[0].get('habilidade'),
             chat_name=rows[0].get('chat_name'),
+            status=rows[0].get('status'),
             criado_em=str(rows[0].get('criado_em')),
             atualizado_em=str(rows[0].get('atualizado_em')),
         )
@@ -93,7 +96,7 @@ def updateChat(chat: ChatSchema):
     """
     response = (
         supabase.table("Chat")
-        .update({"user_id": chat.user_id, "habilidade": chat.habilidade, "chat_name": chat.chat_name, "criado_em": chat.criado_em, "atualizado_em": chat.atualizado_em})
+        .update({"user_id": chat.user_id, "habilidade": chat.habilidade, "chat_name": chat.chat_name, "status": chat.status, "criado_em": chat.criado_em, "atualizado_em": chat.atualizado_em})
         .eq("id", chat.id)
         .execute()
     )

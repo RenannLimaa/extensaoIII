@@ -8,13 +8,15 @@ import { VoiceButton } from './VoiceButton';
 
 type Props = {
   disabled?: boolean;
-  onSend: (text: string) => void;
+  onSend: (text: string, habilidade: string) => void;
+  habilidade: string;
+
   /** quando o usuario dispara um comando slash, o parent roda via runCommand */
-  onCommand: (id: CommandActionId) => void;
+  onCommand: (id: CommandActionId, habilidade: string) => void;
   placeholder?: string;
 };
 
-export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
+export function Composer({ disabled, onSend, onCommand, placeholder, habilidade }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
   const [slashIndex, setSlashIndex] = useState(0);
@@ -42,7 +44,7 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
       ref.current.value = '';
       resize(ref.current);
     }
-    onCommand(action);
+    onCommand(action, habilidade);
   }
 
   function submit() {
@@ -56,7 +58,7 @@ export function Composer({ disabled, onSend, onCommand, placeholder }: Props) {
       runSlash(cmd.action);
       return;
     }
-    onSend(v);
+    onSend(v, habilidade);
     el.value = '';
     setValue('');
     resize(el);

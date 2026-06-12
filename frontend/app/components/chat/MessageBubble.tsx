@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import type { AlternativeLetter, ChatMessage, SmartSuggestion } from '../../lib/types';
 import { MessageContent } from './MessageContent';
 import { QuestionCard } from './QuestionCard';
+import { EssayCard } from './EssayCard';
+import { useEffect, useState } from 'react';
+import { retrieveEssayById } from '../../lib/backendApi';
 
 type Props = {
   message: ChatMessage;
@@ -11,15 +14,31 @@ type Props = {
   onChoose?: (letter: AlternativeLetter) => void;
   onSuggestion?: (s: SmartSuggestion) => void;
   onCopy?: () => void;
+  onSubmitEssay?: (essayId: number, text: string) => void;
+  onNext?: () => void;
 };
-
 function formatTime(ts: number) {
   const d = new Date(ts);
   return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function MessageBubble({ message, locked, onChoose, onSuggestion, onCopy }: Props) {
+function useEssaySubmitted(essayId?: number) {
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!essayId) return;
+    retrieveEssayById(essayId).then((essay) => {
+      setSubmitted(essay?.text !== '');
+    });
+  }, [essayId]);
+
+  return submitted;
+}
+
+export function MessageBubble({ message, locked, onChoose, onSuggestion, onCopy, onSubmitEssay, onNext }: Props) {
   const isUser = message.role === 'user';
+  const essaySubmitted = useEssaySubmitted(message.essayId);
+  console.log("Submetida", essaySubmitted, message.essayId)
 
   return (
     <motion.div
@@ -37,7 +56,7 @@ export function MessageBubble({ message, locked, onChoose, onSuggestion, onCopy 
           <span className="time">{formatTime(message.createdAt)}</span>
         </div>
 
-        {message.content && (
+        {message.content && !message.essayId && (
           <div className="msg-text">
             <MessageContent content={message.content} />
           </div>
@@ -54,6 +73,19 @@ export function MessageBubble({ message, locked, onChoose, onSuggestion, onCopy 
             />
           </div>
         )}
+
+        {message.essayId && (
+          <div className="msg-question-wrap">
+            <EssayCard
+              theme={message.content}
+              essayId={message.essayId}
+              locked={locked || essaySubmitted}
+              onSubmit={(essayId, text) => onSubmitEssay?.(essayId, text)}
+              onNext={() => onNext?.()}
+            />
+          </div>
+        )}
+
 
         {message.suggestions && message.suggestions.length > 0 && (
           <div className="suggestions">

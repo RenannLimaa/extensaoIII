@@ -2,6 +2,7 @@ import type {
   ChatMessageSchema,
   ChatSchema,
   ChatsResponse,
+  EssaySchema,
   MessageResponse,
   QuestionSchema,
 } from './backendTypes';
@@ -85,12 +86,27 @@ export function deleteChat(chatId: number) {
   return request<MessageResponse>(`/chat/${chatId}`, { method: 'DELETE' });
 }
 
-/** PUT /chat/prompt/{chat_id}/{question_id}/{texto} */
-export async function promptAI(chatId: number, questionId: number, texto: string) {
-  const encoded = encodeURIComponent(texto);
+/** POST /chat/status/{chat_id} */
+export async function updateChatStatus(chatId: number, status: 0 | 1) {
+  return request<{ message: string }>(
+    `/chat/status/${chatId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    },
+  );
+}
+
+/** PUT /chat/prompt/{chat_id}/{question_id} */
+export async function promptAI(chatId: number, questionId: number, texto: string, status: 0|1) {
   const data = await request<ChatMessageSchema[] | null>(
-    `/chat/prompt/${chatId}/${questionId}/${encoded}`,
-    { method: 'PUT' },
+    `/chat/prompt/${chatId}/${questionId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto, status }),
+    },
   );
   return asList(data);
 }
@@ -108,4 +124,41 @@ export async function randomQuestion(chatId: number) {
     method: 'GET',
   });
   return asList(data);
+}
+
+/* ---------- Redação ---------- */
+
+/** GET /themes/random/{chat_id} */
+export async function randomTheme(chatId: number) {
+  const data = await request<ChatMessageSchema[] | null>(`/themes/random/${chatId}`, {
+    method: 'GET',
+  });
+  return asList(data);
+}
+
+/** GET /essays/{id} */
+export function retrieveEssayById(id: number) {
+  return request<EssaySchema>(`/essays/${id}`, { method: 'GET' });
+}
+
+/** PUT /chat/prompt/{chat_id}/red/{essay_id} */
+export async function promptAIred(chatId: number, essayId: number, texto: string) {
+  const data = await request<ChatMessageSchema[] | null>(
+    `/chat/prompt/${chatId}/red/${essayId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    },
+  );
+  return asList(data);
+}
+
+/** PUT /essays/{id} */
+export async function updateEssayText(essayId: number, text: string) {
+  return request(`/essays/${essayId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(text),
+  });
 }
