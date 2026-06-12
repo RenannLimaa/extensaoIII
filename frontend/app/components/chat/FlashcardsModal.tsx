@@ -24,6 +24,7 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   chatId?: number | null;
+  chatStatus: 0 | 1;
   questionId?: number;
   subjectId?: SubjectId;
 };
@@ -53,7 +54,7 @@ function parseFlashcards(reply: string): Flashcard[] {
   return cards;
 }
 
-export function FlashcardsModal({ open, onOpenChange, chatId, questionId = 0, subjectId = 'matematica' }: Props) {
+export function FlashcardsModal({ open, onOpenChange, chatId, chatStatus, questionId = 0, subjectId = 'matematica' }: Props) {
   const [topic, setTopic] = useState('');
   const [reply, setReply] = useState<string | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -87,7 +88,7 @@ export function FlashcardsModal({ open, onOpenChange, chatId, questionId = 0, su
         topic ? `Tema principal: ${topic}` : 'Tema principal: a questão ou tópico em andamento',
       ].join(' ');
 
-      const raw = await promptAI(chatId, questionId, prompt);
+      const raw = await promptAI(chatId, questionId, prompt, chatStatus);
       const mapped = await mapBackendMessages(raw, subjectId);
       const lastLlm = [...mapped].reverse().find((m) => m.role === 'assistant' && m.content);
       const text = lastLlm?.content ?? 'A IA não retornou texto. Tente de novo no chat.';

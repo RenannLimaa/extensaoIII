@@ -21,6 +21,7 @@ import {
   randomTheme,
   retrieveAllChats,
   retrieveMessagesByChat,
+  updateChatStatus,
   updateEssayText,
 } from '../../lib/backendApi';
 import {
@@ -63,6 +64,9 @@ export default function ChatPage({ params }: PageProps) {
 
 
   const [chatId, setChatId] = useState<number | null>(null);
+  const [chatStatus, setChatStatus] = useState<0 | 1>(0); // 👈
+
+
   const [chats, setChats] = useState<ChatSchema[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
 
@@ -178,6 +182,8 @@ export default function ChatPage({ params }: PageProps) {
   const loadChatHistory = useCallback(
     async (targetChat: ChatSchema) => {
       setChatId(targetChat.id);
+      setChatStatus(targetChat.status);
+
       let raw = await retrieveMessagesByChat(targetChat.id);
       const hasQuestionRef = raw.some((m) => m.question_id != null);
   
@@ -351,7 +357,17 @@ export default function ChatPage({ params }: PageProps) {
       setTyping(true);
       try {
         const qid = Number(question.id) || questionIdForPrompt();
-        const raw = await promptAI(chatId, qid, `Alternativa ${letter}`);
+    
+        const raw = await promptAI(chatId, qid, `Alternativa ${letter}`, 1);
+
+        setChatStatus(1)
+        const currentChatId = chatId
+        await updateChatStatus(currentChatId, 1)
+
+        setChats((current) =>
+          current.map((c) => (c.id === currentChatId ? { ...c, status: 1 } : c))
+        );
+
         await syncMessages(raw);
         const alt = question.alternativas.find((a) => a.letra === letter);
         const correta = Boolean(alt?.correta);
@@ -375,6 +391,15 @@ export default function ChatPage({ params }: PageProps) {
     try {
       const raw = await randomQuestion(chatId);
       await syncMessages(raw);
+      
+      setChatStatus(0)
+      const currentChatId = chatId;
+      await updateChatStatus(currentChatId, 0)
+      
+      setChats((current) =>
+        current.map((c) => (c.id === currentChatId ? { ...c, status: 0 } : c))
+      );
+
     } catch (err) {
       const detail = err instanceof Error ? err.message : '';
       const msg = detail.includes('Nenhuma questão') || detail.includes('matéria')
@@ -438,14 +463,14 @@ export default function ChatPage({ params }: PageProps) {
           const raw = await promptAIred(chatId, essayId, text);
           await syncEssayMessages(raw);
         } else {
-          const raw = await promptAI(chatId, questionIdForPrompt(), text);
+          const raw = await promptAI(chatId, questionIdForPrompt(), text, chatStatus);
           await syncMessages(raw);
         }
       } finally {
         setTyping(false);
       }
     },
-    [chatId, askNext, askNextTheme, questionIdForPrompt, syncMessages, syncEssayMessages],
+    [chatId, chatStatus, askNext, askNextTheme, questionIdForPrompt, syncMessages, syncEssayMessages],
   );
 
   const runCommand = useCallback(
@@ -483,14 +508,14 @@ export default function ChatPage({ params }: PageProps) {
               : actionId === 'explain-eli5'
               ? 'Versão Simplificada'
               : `Comando: ${actionId}`;
-          const raw = await promptAI(chatId, qid, commandText);
+          const raw = await promptAI(chatId, qid, commandText, chatStatus);
           await syncMessages(raw);
         } finally {
           setTyping(false);
         }
       }
     },
-    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages, setTheme, theme],
+    [askNext, chatId, chatStatus, currentQuestion, questionIdForPrompt, syncMessages, setTheme, theme],
   );
 
   const onSuggestion = useCallback(
@@ -507,14 +532,14 @@ export default function ChatPage({ params }: PageProps) {
         setTyping(true);
         try {
           const qid = Number(currentQuestion.id) || questionIdForPrompt();
-          const raw = await promptAI(chatId, qid, s.label);
+          const raw = await promptAI(chatId, qid, s.label, chatStatus);
           await syncMessages(raw);
         } finally {
           setTyping(false);
         }
       }
     },
-    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages],
+    [askNext, chatId, chatStatus, currentQuestion, questionIdForPrompt, syncMessages],
   );
 
   const onHighlight = useCallback(
@@ -522,13 +547,13 @@ export default function ChatPage({ params }: PageProps) {
       if (!chatId) return;
       setTyping(true);
       try {
-        const raw = await promptAI(chatId, questionIdForPrompt(), `[${action}] ${selectedText}`);
+        const raw = await promptAI(chatId, questionIdForPrompt(), `[${action}] ${selectedText}`, chatStatus);
         await syncMessages(raw);
       } finally {
         setTyping(false);
       }
     },
-    [chatId, questionIdForPrompt, syncMessages],
+    [chatId, chatStatus, questionIdForPrompt, syncMessages],
   );
 
   useEffect(() => {
@@ -681,6 +706,7 @@ export default function ChatPage({ params }: PageProps) {
         open={flashcardsOpen}
         onOpenChange={setFlashcardsOpen}
         chatId={chatId}
+        chatStatus={chatStatus}
         questionId={questionIdForPrompt()}
         subjectId={subjectId}
       />

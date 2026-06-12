@@ -24,7 +24,7 @@ def _trim_hint_response(text: str) -> str:
     return short_text[:260].rstrip(' ,;:-')
 
 
-def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status: int = 1) -> str:
+def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status: int = 0) -> str:
     """
     Chama a LLM (Gemini via LangChain) e retorna o texto completo da resposta.
     Usado por PUT /chat/prompt/{chat_id}/{question_id}/{texto}.
@@ -86,7 +86,7 @@ def getAnswertheQuery(chat_id: int, question_id: int, query: str, chat_status: i
         elif chat_status == 1:
             prompt = prompt2
 
-        llm_service = LLMService("google", 0, prompt=prompt, history=history)
+        llm_service = LLMService("meta", 0, prompt=prompt, history=history)
 
     async def collect() -> str:
         parts: list[str] = []

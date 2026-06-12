@@ -12,6 +12,7 @@ export type ChatSchema = {
   user_id: number;
   habilidade: number;
   chat_name: string;
+  status: 0 | 1;
   criado_em: string;
   atualizado_em: string;
 };

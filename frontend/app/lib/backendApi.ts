@@ -86,14 +86,26 @@ export function deleteChat(chatId: number) {
   return request<MessageResponse>(`/chat/${chatId}`, { method: 'DELETE' });
 }
 
+/** POST /chat/status/{chat_id} */
+export async function updateChatStatus(chatId: number, status: 0 | 1) {
+  return request<{ message: string }>(
+    `/chat/status/${chatId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    },
+  );
+}
+
 /** PUT /chat/prompt/{chat_id}/{question_id} */
-export async function promptAI(chatId: number, questionId: number, texto: string) {
+export async function promptAI(chatId: number, questionId: number, texto: string, status: 0|1) {
   const data = await request<ChatMessageSchema[] | null>(
     `/chat/prompt/${chatId}/${questionId}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto }),
+      body: JSON.stringify({ texto, status }),
     },
   );
   return asList(data);

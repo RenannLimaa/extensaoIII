@@ -45,7 +45,7 @@ export function StudyPlanModal({
         `Minutos por dia: ${minutes}`,
         `Dias: ${days}`,
       ].join(' ');
-      const raw = await promptAI(chatId, questionId, texto);
+      const raw = await promptAI(chatId, questionId, texto, 1);
       const mapped = await mapBackendMessages(raw, subjectId);
       const lastLlm = [...mapped].reverse().find((m) => m.role === 'assistant' && m.content);
       setReply(lastLlm?.content ?? 'A IA não retornou texto. Tente de novo no chat.');
