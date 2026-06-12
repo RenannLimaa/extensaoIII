@@ -1092,6 +1092,39 @@ body::before {
 }
 .composer-hint .sep { opacity: 0.4; }
 
+.composer-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display:flex
+}
+
+.composer-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow: hidden;
+  background: transparent;
+  border-color: transparent;
+}
+
+.voice-live-preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: inherit; /* ajuste para bater com o padding do textarea */
+  color: var(--text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  background: var(--bg);
+}
+
+
 /* Typing */
 .typing {
   display: inline-flex; align-items: center; gap: 3px;

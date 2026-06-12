@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SLASH_COMMANDS } from '../../lib/commandActions';
 import type { CommandActionId } from '../../lib/llm/llmClient';
-import { VoiceButton } from './VoiceButton';
+import { VoiceButton, VoiceButtonHandle } from './VoiceButton';
+
 
 type Props = {
   disabled?: boolean;
@@ -28,6 +29,10 @@ export function Composer({ disabled, onSend, onCommand, placeholder, habilidade 
     const q = value.slice(1).toLowerCase();
     return SLASH_COMMANDS.filter((c) => c.token.slice(1).toLowerCase().includes(q)).slice(0, 6);
   }, [slashOpen, value]);
+
+  const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'processing'>('idle');
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const voiceRef = useRef<VoiceButtonHandle>(null);
 
   useEffect(() => {
     setSlashIndex(0);
@@ -99,67 +104,113 @@ export function Composer({ disabled, onSend, onCommand, placeholder, habilidade 
       </AnimatePresence>
 
       <div className="composer">
-        <textarea
-          ref={ref}
-          rows={1}
-          className="composer-input"
-          placeholder={placeholder ?? 'Pergunte algo, digite "/" para comandos, Cmd+K para paleta…'}
-          onChange={(e) => {
-            setValue(e.currentTarget.value);
-            resize(e.currentTarget);
-          }}
-          onKeyDown={(e) => {
-            if (slashFiltered.length > 0) {
-              if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSlashIndex((i) => Math.min(slashFiltered.length - 1, i + 1));
-                return;
-              }
-              if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSlashIndex((i) => Math.max(0, i - 1));
-                return;
+        <div className="composer-input-wrap">
+          <textarea
+            ref={ref}
+            rows={1}
+            className="composer-input"
+            placeholder={placeholder ?? 'Pergunte algo, digite "/" para comandos, Cmd+K para paleta…'}
+            disabled={voiceState === 'recording' || voiceState === 'processing'}
+            onChange={(e) => {
+              setValue(e.currentTarget.value);
+              resize(e.currentTarget);
+            }}
+            onKeyDown={(e) => {
+              if (slashFiltered.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setSlashIndex((i) => Math.min(slashFiltered.length - 1, i + 1));
+                  return;
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setSlashIndex((i) => Math.max(0, i - 1));
+                  return;
+                }
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  runSlash(slashFiltered[slashIndex].action);
+                  return;
+                }
+                if (e.key === 'Escape') {
+                  setValue('');
+                  if (ref.current) {
+                    ref.current.value = '';
+                    resize(ref.current);
+                  }
+                  return;
+                }
               }
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                runSlash(slashFiltered[slashIndex].action);
-                return;
+                if (!disabled) submit();
               }
-              if (e.key === 'Escape') {
-                setValue('');
-                if (ref.current) {
-                  ref.current.value = '';
-                  resize(ref.current);
-                }
-                return;
-              }
-            }
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              if (!disabled) submit();
-            }
-          }}
-        />
+            }}
+          />
 
-        {/* Voice button - WhatsApp style */}
+        {voiceState === 'recording' && (
+            <div className="composer-input composer-overlay" aria-hidden>
+              <span style={{ color: 'var(--text-primary)' }}>{value}</span>
+              <span style={{ color: 'var(--text-muted)' }}>{liveTranscript}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Voice logic (sem UI própria) */}
         <VoiceButton
+          ref={voiceRef}
           onTranscript={(text) => {
-            if (text.trim()) onSend(text.trim());
+            if (text.trim()) onSend(text.trim(), habilidade);
           }}
-          disabled={disabled}
+          onTranscriptChange={setLiveTranscript}
+          onStateChange={setVoiceState}
         />
 
+        {/* Botão esquerdo: mic OU cancelar */}
         <button
           type="button"
           className="composer-btn"
-          onClick={submit}
-          disabled={disabled}
-          aria-label="Enviar mensagem"
+          onClick={() => {
+            if (voiceState === 'idle') voiceRef.current?.start();
+            else voiceRef.current?.cancel();
+          }}
+          disabled={disabled || voiceState === 'processing'}
+          aria-label={voiceState === 'idle' ? 'Gravar mensagem de voz' : 'Cancelar gravação'}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <line x1="12" y1="19" x2="12" y2="5" />
-            <polyline points="5 12 12 5 19 12" />
-          </svg>
+          {voiceState === 'idle' ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="22" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          )}
+        </button>
+
+        {/* Botão direito: enviar texto OU confirmar áudio */}
+        <button
+          type="button"
+          className="composer-btn"
+          onClick={() => {
+            if (voiceState === 'recording') voiceRef.current?.send();
+            else submit();
+          }}
+          disabled={disabled || voiceState === 'processing'}
+          aria-label={voiceState === 'recording' ? 'Enviar áudio' : 'Enviar mensagem'}
+        >
+          {voiceState === 'recording' ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="12" y1="19" x2="12" y2="5" />
+              <polyline points="5 12 12 5 19 12" />
+            </svg>
+          )}
         </button>
       </div>
 
