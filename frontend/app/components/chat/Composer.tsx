@@ -34,6 +34,26 @@ export function Composer({ disabled, onSend, onCommand, placeholder, habilidade 
   const [liveTranscript, setLiveTranscript] = useState('');
   const voiceRef = useRef<VoiceButtonHandle>(null);
 
+
+  const clearComposer = () => {
+    setValue('');
+    setLiveTranscript('');
+    if (ref.current) {
+      ref.current.value = '';
+      resize(ref.current);
+    }
+  };
+
+  // 2. Use um useEffect para monitorar quando a textarea volta ao DOM
+  useEffect(() => {
+    if (voiceState === 'idle' && ref.current) {
+      // Garante que o input recupere o foco
+      ref.current.focus();
+      // Força o recálculo da altura baseado no 'value' atual
+      resize(ref.current);
+    }
+  }, [voiceState]); // Executa sempre que o estado da voz mudar
+
   useEffect(() => {
     setSlashIndex(0);
   }, [value]);
@@ -105,54 +125,58 @@ export function Composer({ disabled, onSend, onCommand, placeholder, habilidade 
 
       <div className="composer">
         <div className="composer-input-wrap">
-          <textarea
-            ref={ref}
-            rows={1}
-            className="composer-input"
-            placeholder={placeholder ?? 'Pergunte algo, digite "/" para comandos, Cmd+K para paleta…'}
-            disabled={voiceState === 'recording' || voiceState === 'processing'}
-            onChange={(e) => {
-              setValue(e.currentTarget.value);
-              resize(e.currentTarget);
-            }}
-            onKeyDown={(e) => {
-              if (slashFiltered.length > 0) {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  setSlashIndex((i) => Math.min(slashFiltered.length - 1, i + 1));
-                  return;
-                }
-                if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setSlashIndex((i) => Math.max(0, i - 1));
-                  return;
+          {voiceState === 'recording' || voiceState === 'processing' ? (
+            <div className="composer-input composer-voice-display">
+              <span className="voice-text-typed">{value}</span>
+              {value && liveTranscript ? ' ' : ''}
+              <span className="voice-text-live">{liveTranscript}</span>
+              {!value && !liveTranscript && (
+                <span className="voice-text-live">Ouvindo…</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              ref={ref}
+              rows={1}
+              value={value} // <--- ISSO É CRUCIAL! Garante que o texto volte para cá
+              className="composer-input"
+              placeholder={placeholder ?? 'Pergunte algo, digite "/" para comandos, Cmd+K para paleta…'}
+              onChange={(e) => {
+                setValue(e.currentTarget.value);
+                resize(e.currentTarget);
+              }}
+              onKeyDown={(e) => {
+                if (slashFiltered.length > 0) {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSlashIndex((i) => Math.min(slashFiltered.length - 1, i + 1));
+                    return;
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSlashIndex((i) => Math.max(0, i - 1));
+                    return;
+                  }
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    runSlash(slashFiltered[slashIndex].action);
+                    return;
+                  }
+                  if (e.key === 'Escape') {
+                    setValue('');
+                    if (ref.current) {
+                      ref.current.value = '';
+                      resize(ref.current);
+                    }
+                    return;
+                  }
                 }
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  runSlash(slashFiltered[slashIndex].action);
-                  return;
+                  if (!disabled) submit();
                 }
-                if (e.key === 'Escape') {
-                  setValue('');
-                  if (ref.current) {
-                    ref.current.value = '';
-                    resize(ref.current);
-                  }
-                  return;
-                }
-              }
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (!disabled) submit();
-              }
-            }}
-          />
-
-        {voiceState === 'recording' && (
-            <div className="composer-input composer-overlay" aria-hidden>
-              <span style={{ color: 'var(--text-primary)' }}>{value}</span>
-              <span style={{ color: 'var(--text-muted)' }}>{liveTranscript}</span>
-            </div>
+              }}
+            />
           )}
         </div>
 
@@ -160,7 +184,10 @@ export function Composer({ disabled, onSend, onCommand, placeholder, habilidade 
         <VoiceButton
           ref={voiceRef}
           onTranscript={(text) => {
-            if (text.trim()) onSend(text.trim(), habilidade);
+            if (text.trim()) {
+              onSend(text.trim(), habilidade);
+              clearComposer()
+            }
           }}
           onTranscriptChange={setLiveTranscript}
           onStateChange={setVoiceState}
