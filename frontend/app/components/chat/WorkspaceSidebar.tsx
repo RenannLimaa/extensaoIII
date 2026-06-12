@@ -1,42 +1,63 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { SUBJECTS } from '../../lib/catalog';
+import type { ChatSchema } from '../../lib/backendTypes';
 import type { SubjectId } from '../../lib/types';
+import { habilidadeNome, subjectToHabilidadeId } from '../../lib/subjectHabilidade';
 import { useTheme } from '../providers/ThemeProvider';
-
-type SessionEntry = {
-  id: string;
-  subjectId: SubjectId;
-  title: string;
-  whenLabel: string;
-  accuracy: number;
-};
 
 type Props = {
   activeSubjectId: SubjectId;
-  buildId?: string;
   onOpenCommand: () => void;
+  chats: ChatSchema[];
+  selectedChatId: number | null;
+  onSelectChat: (chatId: number) => void;
+  onCreateChat: () => void;
+  onRequestDeleteChat: (chatId: number) => void;
+  collapsed?: boolean;
 };
 
-/**
- * Lista mockada de sessoes passadas (drag-to-reorder fica para v2 — o layout
- * ja tolera quando for adicionado).
- */
-const MOCK_SESSIONS: SessionEntry[] = [
-  { id: 's1', subjectId: 'matematica', title: 'Funções afim e quadrática', whenLabel: 'Hoje', accuracy: 72 },
-  { id: 's2', subjectId: 'linguagens', title: 'Interpretação — poesia moderna', whenLabel: 'Ontem', accuracy: 85 },
-  { id: 's3', subjectId: 'natureza', title: 'Cinemática — MRUV', whenLabel: '2 dias', accuracy: 40 },
-  { id: 's4', subjectId: 'humanas', title: 'República Velha', whenLabel: '3 dias', accuracy: 66 },
-  { id: 's5', subjectId: 'redacao', title: 'Proposta de intervenção', whenLabel: '5 dias', accuracy: 88 },
-];
+function formatChatLabel(chat: ChatSchema) {
+  const date = new Date(chat.atualizado_em || chat.criado_em);
+  if (Number.isNaN(date.getTime())) return `#${chat.id}`;
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
-export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Props) {
+export function WorkspaceSidebar({
+  activeSubjectId,
+  onOpenCommand,
+  chats,
+  selectedChatId,
+  onSelectChat,
+  onCreateChat,
+  onRequestDeleteChat,
+  collapsed = false,
+}: Props) {
   const { theme, toggle } = useTheme();
-  const qs = buildId ? `?build=${encodeURIComponent(buildId)}` : '';
+  const activeHabilidade = subjectToHabilidadeId(activeSubjectId);
+
+  const activeChats = useMemo(
+    () =>
+      chats
+        .filter((c) => c.habilidade === activeHabilidade)
+        .sort((a, b) => {
+          const timeA = Date.parse(a.atualizado_em || a.criado_em);
+          const timeB = Date.parse(b.atualizado_em || b.criado_em);
+          if (timeA !== timeB) return timeB - timeA;
+          return b.id - a.id;
+        }),
+    [chats, activeHabilidade],
+  );
 
   return (
-    <aside className="ws-sidebar" aria-label="Navegação da workspace">
+    <aside className={`ws-sidebar ${collapsed ? 'is-collapsed' : ''}`} aria-label="Navegação da workspace">
       <div className="ws-sidebar-header">
         <Link href="/" className="brand-lockup" aria-label="ENEMBot home">
           <span className="brand-mark" aria-hidden>
@@ -63,8 +84,9 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         {SUBJECTS.map((s) => (
           <Link
             key={s.id}
-            href={`/chat/${s.id}${qs}`}
+            href={`/chat/${s.id}`}
             className={`ws-nav-item ${s.id === activeSubjectId ? 'is-active' : ''}`}
+            title={collapsed ? s.title : undefined}
           >
             <span className="emoji" aria-hidden>
               {s.icon}
@@ -74,55 +96,94 @@ export function WorkspaceSidebar({ activeSubjectId, buildId, onOpenCommand }: Pr
         ))}
       </nav>
 
-      <nav className="ws-nav" style={{ marginTop: 8 }}>
-        <div className="ws-nav-label">Recursos IA</div>
-        <div className="ws-nav-item" onClick={onOpenCommand}>
-          <span className="emoji" aria-hidden>
-            ✨
-          </span>
-          <span>Paleta de comandos</span>
-        </div>
-        <Link href={`/chat/${activeSubjectId}${qs}`} className="ws-nav-item">
-          <span className="emoji" aria-hidden>
-            🗂️
-          </span>
-          <span>Flashcards</span>
-          <span className="count">12</span>
-        </Link>
-        <div className="ws-nav-item">
-          <span className="emoji" aria-hidden>
-            📅
-          </span>
-          <span>Plano semanal</span>
-        </div>
-      </nav>
-
       <div className="ws-nav-label" style={{ padding: '14px 14px 4px' }}>
-        Sessões recentes
+        Históricos · {habilidadeNome(activeHabilidade)}
       </div>
-      <div className="ws-sessions">
-        {MOCK_SESSIONS.map((s, i) => (
-          <div key={s.id} className={`ws-session ${i === 0 ? 'is-active' : ''}`}>
-            <div className="title">
-              <span aria-hidden>{SUBJECTS.find((x) => x.id === s.subjectId)?.icon}</span>
-              {s.title}
+      <div className="ws-sessions" style={{ gap: 10 }}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onCreateChat}>
+          Nova conversa
+        </button>
+
+        {activeChats.length > 0 ? (
+          <>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Selecionar histórico</span>
+              <select
+                className="input"
+                value={selectedChatId ? String(selectedChatId) : ''}
+                onChange={(e) => onSelectChat(Number(e.target.value))}
+              >
+                {activeChats.map((chat) => (
+                  <option key={chat.id} value={chat.id}>
+                    {chat.chat_name} · {formatChatLabel(chat)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="ws-session-list">
+              {activeChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`ws-session ${chat.id === selectedChatId ? 'is-active' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectChat(chat.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectChat(chat.id);
+                    }
+                  }}
+                >
+                  <div className="title">{chat.chat_name || `Conversa #${chat.id}`}</div>
+                  <div className="meta">
+                    <span className="time">{formatChatLabel(chat)}</span>
+                  </div>
+                  <div className="actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectChat(chat.id);
+                      }}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        onRequestDeleteChat(chat.id);
+                      }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
+          </>
+        ) : (
+          <div className="ws-session" style={{ opacity: 0.8 }}>
+            <div className="title">Nenhum histórico ainda</div>
             <div className="meta">
-              <span>{s.whenLabel}</span>
-              <span className="dot" />
-              <span>{s.accuracy}%</span>
+              <span>Crie a primeira conversa dessa matéria</span>
             </div>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="ws-sidebar-footer">
-        <span className="av" aria-hidden>
-          T
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.84rem' }}>Estudante ENEM</div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Protótipo v0.2</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.84rem' }}>
+            Ferramentas
+          </div>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+            Tema e atalhos do workspace
+          </div>
         </div>
         <button className="icon-btn" onClick={toggle} aria-label="Alternar tema" title="Alternar tema (⌘⇧L)">
           {theme === 'dark' ? (

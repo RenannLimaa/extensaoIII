@@ -22,10 +22,10 @@ export function FinalCTA() {
             Sem cadastro, sem plano premium, sem enrolação. Escolha uma matéria e a gente começa.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-            <Link href="/chat/matematica?build=teorico" className="btn btn-lg btn-accent">
+            <Link href="/chat/matematica" className="btn btn-lg btn-accent">
               Começar matemática →
             </Link>
-            <Link href="/chat/redacao?build=teorico" className="btn btn-lg btn-ghost" style={{ color: 'rgba(255,255,255,0.8)', borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Link href="/chat/redacao" className="btn btn-lg btn-ghost" style={{ color: 'rgba(255,255,255,0.8)', borderColor: 'rgba(255,255,255,0.2)' }}>
               Treinar redação
             </Link>
           </div>

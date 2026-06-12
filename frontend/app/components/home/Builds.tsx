@@ -103,7 +103,7 @@ export function Builds() {
             "{activeBuild.systemPitch}"
           </p>
           <div style={{ marginTop: 4 }}>
-            <Link href={`/chat/matematica?build=${activeBuild.id}`} className="btn btn-accent">
+            <Link href="/chat/matematica" className="btn btn-accent">
               Iniciar com {activeBuild.title} →
             </Link>
           </div>

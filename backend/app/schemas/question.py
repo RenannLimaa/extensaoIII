@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import List
 from app.schemas.alternativa import AlternativaSchema
 from typing import Optional
 
@@ -7,6 +8,7 @@ class QuestionSchema(BaseModel):
     habilidade: int
     competencia: int
     enunciado: str = Field(max_length=2000)
+    alternativas: List[AlternativaSchema]
+    resposta_correta: str
     image: Optional[str] = None
-    alternativas: list[AlternativaSchema]
     dificuldade: int

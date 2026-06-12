@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Body
 from app.schemas.user import UserSchema
 
+from app.routes_back.userDB_routes import getUserByID
+
 router = APIRouter(prefix="/user", tags=["user"])
 
 @router.get("/login/")
@@ -34,8 +36,7 @@ def userinfo():
 
         Ex de uso: GET http://127.0.0.1:8000/user/
     """
-    #retornar objeto usuário usando dependency
-    user = UserSchema(id=3, username= "fulano", email= "fulano@gmail.com", password="123") #placeholder
+    user = getUserByID(4) #sempre puxa o user 4 por enquanto
     return user
 
 @router.post("/")

@@ -33,7 +33,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} ${mono.variable}`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

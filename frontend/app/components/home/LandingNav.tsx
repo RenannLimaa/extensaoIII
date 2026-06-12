@@ -56,8 +56,8 @@ export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
               </svg>
             )}
           </button>
-          <Link href="/chat/matematica?build=teorico" className="btn btn-primary">
-            Começar grátis →
+          <Link href="/chat/matematica" className="btn btn-primary">
+            Ir ao chat →
           </Link>
         </div>
       </div>

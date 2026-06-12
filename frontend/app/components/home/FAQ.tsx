@@ -8,12 +8,12 @@ const qa = [
     a: 'Sim — enquanto o protótipo estiver público. O plano é manter um tier gratuito bem generoso mesmo depois do lançamento.',
   },
   {
-    q: 'Preciso criar conta?',
-    a: 'Não. Você pode começar uma sessão direto, sem cadastro. Conta entra em cena quando você quiser salvar progresso entre dispositivos.',
+    q: 'Posso começar imediatamente?',
+    a: 'Sim. Você pode abrir uma sessão direto e usar o chat sem passos extras antes de estudar.',
   },
   {
     q: 'As questões são reais do ENEM?',
-    a: 'No protótipo, usamos um banco mockado com questões inspiradas em provas recentes. Na versão final, misturamos banco oficial + questões geradas pela IA na hora.',
+    a: 'As sessões usam questões no estilo ENEM para treino prático. O catálogo evolui continuamente com novas questões e ajustes de dificuldade.',
   },
   {
     q: 'O ENEMBot substitui um cursinho?',
