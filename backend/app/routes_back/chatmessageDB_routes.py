@@ -3,17 +3,6 @@ from supabase import create_client, Client
 import os
 from app.schemas.chatmessage import ChatMessageSchema
 
-MAX_CHATMESSAGE_TEXTO_LEN = 3000
-
-
-def _normalize_message_text(texto: str | None) -> str:
-    if texto is None:
-        return ""
-    text = str(texto)
-    if len(text) <= MAX_CHATMESSAGE_TEXTO_LEN:
-        return text
-    return text[:MAX_CHATMESSAGE_TEXTO_LEN]
-
 load_dotenv()
 
 url = os.environ.get("SUPABASE_URL")
@@ -38,7 +27,7 @@ def getChatsMessagesByChat(chat_id: int):
                 id=row.get('id'),
                 chat_id=row.get('chat_id'),
                 author=row.get('author'),
-                texto=_normalize_message_text(row.get('texto')),
+                texto=row.get('texto'),
                 timestamp=str(row.get('timestamp')),
                 question_id=row.get('question_id')
             )
@@ -53,18 +42,16 @@ def createChatMessage(chat_id: int, author: str, texto: str, question_id: int=0)
 
     Retorna o ChatMessageSchema se obteve sucesso.
     """
-    texto_normalizado = _normalize_message_text(texto)
-
     if question_id != 0:
         response = (
             supabase.table("ChatMessage")
-            .insert({"chat_id": chat_id, "author": author, "texto": texto_normalizado, "question_id": question_id})
+            .insert({"chat_id": chat_id, "author": author, "texto": texto, "question_id": question_id})
             .execute()
         )
     else:
         response = (
             supabase.table("ChatMessage")
-            .insert({"chat_id": chat_id, "author": author, "texto": texto_normalizado})
+            .insert({"chat_id": chat_id, "author": author, "texto": texto})
             .execute()
         )
     rows = response.data
@@ -73,7 +60,7 @@ def createChatMessage(chat_id: int, author: str, texto: str, question_id: int=0)
             id=rows[0].get('id'),
             chat_id=rows[0].get('chat_id'),
             author=rows[0].get('author'),
-            texto=_normalize_message_text(rows[0].get('texto')),
+            texto=rows[0].get('texto'),
             timestamp=str(rows[0].get('timestamp')),
             question_id=rows[0].get('question_id')
         )
@@ -136,7 +123,7 @@ def getMessagesRelatedToQuestion(chat_id: int, question_id: int) -> tuple[ChatMe
             id=row.get('id'),
             chat_id=row.get('chat_id'),
             author=row.get('author'),
-            texto=_normalize_message_text(row.get('texto')),
+            texto=row.get('texto'),
             timestamp=str(row.get('timestamp')),
             question_id=row.get('question_id')
         )
