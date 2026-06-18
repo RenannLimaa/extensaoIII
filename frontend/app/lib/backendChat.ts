@@ -143,6 +143,7 @@ export function mapBackendMessage(msg: ChatMessageSchema, question?: Question): 
     id: String(msg.id),
     role: mapRole(msg.author),
     content,
+    questionId: msg.question_id ?? undefined,
     question: showCard ? question : undefined,
     createdAt: parseTimestamp(msg.timestamp),
   };

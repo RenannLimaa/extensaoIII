@@ -5,7 +5,7 @@ import type { AlternativeLetter, Question } from '../../lib/types';
 type Props = {
   question: Question;
   chosen?: AlternativeLetter;
-  feedback?: { correta: boolean; explicacao: string };
+  feedback?: { correta: boolean; explicacao: string; fixacao?: string[] };
   locked: boolean;
   onChoose: (letter: AlternativeLetter) => void;
 };
@@ -63,17 +63,6 @@ export function QuestionCard({ question, chosen, feedback, locked, onChoose }: P
         <p className="q-empty-alts">Alternativas indisponíveis.</p>
       )}
 
-      {feedback ? (
-        <footer className={`q-verdict ${feedback.correta ? 'correct' : 'wrong'}`}>
-          <span className="v-icon" aria-hidden>
-            {feedback.correta ? '✓' : '✕'}
-          </span>
-          <div>
-            <strong>{feedback.correta ? 'Resposta correta' : 'Resposta incorreta'}</strong>
-            <p className="q-verdict-text">{feedback.explicacao}</p>
-          </div>
-        </footer>
-      ) : null}
     </article>
   );
 }

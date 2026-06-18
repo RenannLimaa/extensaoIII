@@ -29,6 +29,7 @@ import {
 import { findSubject } from '../../lib/catalog';
 import type { ChatSchema } from '../../lib/backendTypes';
 import { subjectToHabilidadeId } from '../../lib/subjectHabilidade';
+import { buildFixationQuestions, buildQuizPrompt } from '../../lib/llm/studyPrompts';
 import type {
   AlternativeLetter,
   ChatMessage,
@@ -317,11 +318,34 @@ export default function ChatPage({ params }: PageProps) {
             explicacao: correta ? 'Resposta correta.' : 'Resposta incorreta.',
           },
         });
+        patchMessage(messageId, {
+          chosen: letter,
+          feedback: {
+            correta,
+            explicacao: correta ? 'Resposta correta.' : 'Resposta incorreta.',
+            fixacao: buildFixationQuestions(question, correta),
+          },
+        });
       } finally {
         setTyping(false);
       }
     },
     [chatId, syncMessages, questionIdForPrompt],
+  );
+
+  const onFixationPrompt = useCallback(
+    async (prompt: string, questionId?: number) => {
+      if (!chatId) return;
+      setTyping(true);
+      try {
+        const qid = questionId && questionId > 0 ? questionId : questionIdForPrompt();
+        const raw = await promptAI(chatId, qid, prompt);
+        await syncMessages(raw);
+      } finally {
+        setTyping(false);
+      }
+    },
+    [chatId, questionIdForPrompt, syncMessages],
   );
 
   const askNext = useCallback(async () => {
@@ -373,6 +397,17 @@ export default function ChatPage({ params }: PageProps) {
         await askNext();
         return;
       }
+      if (actionId === 'quiz-topic' && chatId && currentQuestion) {
+        setTyping(true);
+        try {
+          const qid = Number(currentQuestion.id) || questionIdForPrompt();
+          const raw = await promptAI(chatId, qid, buildQuizPrompt(currentQuestion, subject.title));
+          await syncMessages(raw);
+        } finally {
+          setTyping(false);
+        }
+        return;
+      }
       if (actionId === 'flashcards') {
         setFlashcardsOpen(true);
         return;
@@ -408,13 +443,24 @@ export default function ChatPage({ params }: PageProps) {
         }
       }
     },
-    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages, setTheme, theme],
+    [askNext, chatId, currentQuestion, questionIdForPrompt, subject.title, syncMessages, setTheme, theme],
   );
 
   const onSuggestion = useCallback(
     async (s: SmartSuggestion) => {
       if (s.action === 'next' || s.action === 'easier' || s.action === 'harder' || s.action === 'similar') {
         await askNext();
+        return;
+      }
+      if (s.action === 'quiz-topic' && chatId && currentQuestion) {
+        setTyping(true);
+        try {
+          const qid = Number(currentQuestion.id) || questionIdForPrompt();
+          const raw = await promptAI(chatId, qid, buildQuizPrompt(currentQuestion, subject.title));
+          await syncMessages(raw);
+        } finally {
+          setTyping(false);
+        }
         return;
       }
       if (s.action === 'flashcards') {
@@ -432,7 +478,7 @@ export default function ChatPage({ params }: PageProps) {
         }
       }
     },
-    [askNext, chatId, currentQuestion, questionIdForPrompt, syncMessages],
+    [askNext, chatId, currentQuestion, questionIdForPrompt, subject.title, syncMessages],
   );
 
   const onHighlight = useCallback(
@@ -560,6 +606,7 @@ export default function ChatPage({ params }: PageProps) {
                   message={m}
                   locked={m.id !== activeQuestionMessageId}
                   onChoose={(l) => m.question && onChoose(m.id, m.question, l)}
+                    onFixationPrompt={onFixationPrompt}
                   onSuggestion={onSuggestion}
                 />
               );

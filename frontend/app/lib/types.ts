@@ -58,6 +58,8 @@ export type ChatMessage = {
   role: ChatRole;
   /** Markdown com suporte a GFM + math ($...$) + <callout>...</callout> */
   content: string;
+  /** Id da questao associada a essa mensagem, quando existir */
+  questionId?: number;
   /** Quando a mensagem envolve uma questao */
   question?: Question;
   /** Letra escolhida pelo aluno (se aplicavel) */
@@ -66,6 +68,7 @@ export type ChatMessage = {
   feedback?: {
     correta: boolean;
     explicacao: string;
+    fixacao?: string[];
   };
   /** Sugestoes contextuais apos resposta do bot */
   suggestions?: SmartSuggestion[];
