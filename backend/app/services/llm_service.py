@@ -57,7 +57,7 @@ std_prompt = """
     
     **Você deve terminar sua resposta com 3 sugestões de perguntas adicionais que o estudante poderia perguntar para expandir seus conhecimentos.**
     
-    **As sugestões devem estar estruturadas no seguinte formato:**
+    **As sugestões devem ter 90 caracteres no máximo e estarem estruturadas no seguinte formato:**
     
     "~ sugestão1 ~ sugestão2 ~ sugestão3"
 """
