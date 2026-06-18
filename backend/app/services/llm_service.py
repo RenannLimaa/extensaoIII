@@ -52,6 +52,14 @@ std_prompt = """
     ## # Início da Interação
 
     **Aguarde o estudante apresentar sua dúvida específica sobre a questão acima antes de iniciar a primeira orientação.**
+    
+    ## # Sugestões de Perguntas
+    
+    **Você deve terminar sua resposta com 3 sugestões de perguntas adicionais que o estudante poderia perguntar para expandir seus conhecimentos.**
+    
+    **As sugestões devem estar estruturadas no seguinte formato:**
+    
+    "~ sugestão1 ~ sugestão2 ~ sugestão3"
 """
 
 
