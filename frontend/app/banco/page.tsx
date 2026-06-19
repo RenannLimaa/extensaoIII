@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BancoQuestionCard } from '../components/questions/BancoQuestionCard';
 import { BancoSidebar, type Area } from '../components/questions/BancoSidebar';
 import { BancoToolbar, type SortKey } from '../components/questions/BancoToolbar';
@@ -14,30 +14,34 @@ const AREAS: readonly Area[] = [
   { id: 2, nome: 'Ciências Humanas', icon: '🌍' },
 ];
 
+/** minúsculas + sem acento, p/ busca tolerante ("matematica" casa "matemática"). */
+function normalize(s: string): string {
+  // remove marcas de acento (combining diacritics, faixa U+0300–U+036F)
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
 export default function BancoPage() {
   const [byArea, setByArea] = useState<Record<number, QuestionSchema[]>>({});
+  const [erroredAreas, setErroredAreas] = useState<Record<number, boolean>>({});
   const [area, setArea] = useState<number>(AREAS[0].id);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('padrao');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setError(null);
     Promise.all(
       AREAS.map((a) =>
         retrieveQuestionsByHabilidade(a.id)
-          .then((qs) => [a.id, qs] as const)
-          .catch(() => [a.id, [] as QuestionSchema[]] as const),
+          .then((qs) => ({ id: a.id, qs, error: false }))
+          .catch(() => ({ id: a.id, qs: [] as QuestionSchema[], error: true })),
       ),
     )
-      .then((entries) => {
-        if (!cancelled) setByArea(Object.fromEntries(entries));
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar o banco.');
+      .then((results) => {
+        if (cancelled) return;
+        setByArea(Object.fromEntries(results.map((r) => [r.id, r.qs])));
+        setErroredAreas(Object.fromEntries(results.map((r) => [r.id, r.error])));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -47,6 +51,12 @@ export default function BancoPage() {
     };
   }, []);
 
+  // trocar de área limpa a busca (o filtro da área anterior não faz sentido na nova)
+  const selectArea = useCallback((id: number) => {
+    setArea(id);
+    setQuery('');
+  }, []);
+
   const counts = useMemo(
     () => Object.fromEntries(AREAS.map((a) => [a.id, (byArea[a.id] ?? []).length])),
     [byArea],
@@ -54,11 +64,12 @@ export default function BancoPage() {
 
   const activeArea = AREAS.find((a) => a.id === area) ?? AREAS[0];
   const all = byArea[area] ?? [];
+  const areaError = erroredAreas[area] === true;
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalize(query.trim());
     const base = q
-      ? all.filter((x) => x.enunciado.toLowerCase().includes(q) || String(x.id) === q)
+      ? all.filter((x) => normalize(x.enunciado).includes(q) || String(x.id) === query.trim())
       : all;
     const sorted = [...base];
     switch (sort) {
@@ -79,7 +90,7 @@ export default function BancoPage() {
 
   return (
     <div className="workspace">
-      <BancoSidebar areas={AREAS} activeArea={area} onSelectArea={setArea} counts={counts} />
+      <BancoSidebar areas={AREAS} activeArea={area} onSelectArea={selectArea} counts={counts} />
 
       <section className="ws-main">
         <div className="ws-topbar">
@@ -98,22 +109,22 @@ export default function BancoPage() {
               onQueryChange={setQuery}
               areas={AREAS}
               area={area}
-              onAreaChange={setArea}
+              onAreaChange={selectArea}
               sort={sort}
               onSortChange={setSort}
             />
 
-            <div className="banco-status">
+            <div className="banco-status" role="status" aria-live="polite">
               {loading
                 ? 'Carregando…'
-                : error
-                ? error
+                : areaError
+                ? `Não foi possível carregar as questões de ${activeArea.nome}.`
                 : query.trim()
                 ? `${filtered.length} de ${all.length} questões em ${activeArea.nome}`
                 : `${all.length} ${all.length === 1 ? 'questão' : 'questões'} em ${activeArea.nome}`}
             </div>
 
-            {!loading && !error && filtered.length === 0 && (
+            {!loading && !areaError && filtered.length === 0 && (
               <p className="banco-empty">
                 {query.trim()
                   ? 'Nenhuma questão encontrada para essa busca.'
