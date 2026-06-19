@@ -1182,6 +1182,49 @@ body::before {
   transition: all var(--dur-fast);
 }
 .insp-cta:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.insp-cta:disabled { opacity: 0.45; cursor: default; }
+.insp-cta:disabled:hover { border-color: var(--border-strong); color: var(--text-secondary); background: transparent; }
+
+.insp-error { margin: 10px 0 0; color: var(--danger); font-size: 0.78rem; }
+
+.q-preview {
+  margin-top: 12px; padding: 12px 14px;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: var(--bg-soft);
+}
+.q-preview-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px;
+}
+.q-preview-id { font-size: 0.74rem; font-weight: 600; color: var(--text-muted); }
+.q-badge {
+  padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 600;
+  color: var(--accent-strong); background: var(--accent-soft);
+}
+.q-preview-enun {
+  margin: 0 0 10px; font-size: 0.82rem; line-height: 1.5; color: var(--text-primary);
+}
+.q-preview-alts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; }
+.q-preview-alts li {
+  display: flex; gap: 8px; align-items: baseline;
+  padding: 5px 8px; border-radius: 7px;
+  font-size: 0.8rem; line-height: 1.4; color: var(--text-secondary);
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.q-preview-alts li.correct {
+  background: var(--accent-soft); color: var(--accent-strong); font-weight: 500;
+}
+.q-preview-alts .alt-letra {
+  flex: none; width: 18px; font-weight: 600; color: var(--text-muted);
+}
+.q-preview-alts li.correct .alt-letra { color: var(--accent-strong); }
+.q-reveal {
+  width: 100%; padding: 7px; border-radius: 8px;
+  border: 1px solid var(--border-subtle); background: transparent;
+  font-size: 0.78rem; color: var(--text-secondary);
+  transition: all var(--dur-fast);
+}
+.q-reveal:hover { border-color: var(--accent); color: var(--accent-strong); }
 
 /* ---- Highlight popover ---- */
 .highlight-popover {
