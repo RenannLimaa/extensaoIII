@@ -13,9 +13,16 @@ type Props = {
   subjectTitle: string;
 };
 
+function dificuldadeLabel(n: number): string {
+  if (n <= 1) return 'Fácil';
+  if (n === 2) return 'Média';
+  return 'Difícil';
+}
+
 export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props) {
   const [total, setTotal] = useState<number | null>(null);
   const [preview, setPreview] = useState<QuestionSchema | null>(null);
+  const [revealed, setRevealed] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +31,7 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
     let cancelled = false;
     setTotal(null);
     setPreview(null);
+    setRevealed(false);
     setError(null);
     retrieveQuestionsByHabilidade(habilidadeId)
       .then((qs) => {
@@ -40,6 +48,7 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
   // GET /questions/random/habilidade/{id} — sorteia uma questão da matéria (sem chat)
   const drawRandom = useCallback(async () => {
     setLoadingPreview(true);
+    setRevealed(false);
     setError(null);
     try {
       const q = await randomQuestionByHabilidade(habilidadeId);
@@ -61,34 +70,44 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
       </div>
 
       <div className="insp-block">
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 8 }}>
-          📚 Banco de {subjectTitle}
-          {total !== null && (
-            <strong style={{ color: 'var(--text)' }}> — {total} questões</strong>
-          )}
+        <h4>
+          <span aria-hidden>📚</span> Banco de questões
+        </h4>
+        <div className="stat-row">
+          <span className="stat-val">{total ?? '—'}</span>
+          <span className="stat-label">
+            {total === 1 ? 'questão' : 'questões'} em {subjectTitle}
+          </span>
         </div>
+
         <button className="insp-cta" onClick={drawRandom} disabled={loadingPreview || !total}>
           <span aria-hidden>🎲</span>
           {loadingPreview ? 'Sorteando…' : 'Sortear questão'}
         </button>
 
-        {error && (
-          <p style={{ color: 'var(--danger, #e11)', fontSize: '0.78rem', marginTop: 8 }}>{error}</p>
-        )}
+        {error && <p className="insp-error">{error}</p>}
 
         {preview && (
-          <div
-            style={{
-              marginTop: 10,
-              padding: 12,
-              borderRadius: 8,
-              background: 'var(--surface-2, rgba(127,127,127,0.08))',
-              fontSize: '0.8rem',
-              lineHeight: 1.5,
-            }}
-          >
-            <div style={{ color: 'var(--text-muted)', marginBottom: 6 }}>Questão #{preview.id}</div>
-            <p style={{ margin: 0 }}>{preview.enunciado}</p>
+          <div className="q-preview">
+            <div className="q-preview-head">
+              <span className="q-preview-id">Questão #{preview.id}</span>
+              <span className="q-badge">{dificuldadeLabel(preview.dificuldade)}</span>
+            </div>
+            <p className="q-preview-enun">{preview.enunciado}</p>
+            <ul className="q-preview-alts">
+              {preview.alternativas.map((alt) => {
+                const correct = revealed && alt.letra === preview.resposta_correta;
+                return (
+                  <li key={alt.letra} className={correct ? 'correct' : undefined}>
+                    <span className="alt-letra">{alt.letra}</span>
+                    <span>{alt.texto}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <button className="q-reveal" onClick={() => setRevealed((r) => !r)}>
+              {revealed ? 'Ocultar resposta' : 'Ver resposta'}
+            </button>
           </div>
         )}
       </div>
