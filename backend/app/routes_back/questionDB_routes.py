@@ -11,6 +11,32 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
+def _rowToQuestion(row: dict) -> QuestionSchema:
+    """Mapeia uma linha da tabela Question para QuestionSchema."""
+    image = row.get('image')
+    if image is None:
+        image = ""
+
+    alternativas = row.get('alternativas')
+    alternativas_em_schemas = [
+        AlternativaSchema(letra="A", texto=str(alternativas["A"])),
+        AlternativaSchema(letra="B", texto=str(alternativas["B"])),
+        AlternativaSchema(letra="C", texto=str(alternativas["C"])),
+        AlternativaSchema(letra="D", texto=str(alternativas["D"])),
+        AlternativaSchema(letra="E", texto=str(alternativas["E"]))
+    ]
+
+    return QuestionSchema(
+        id=row.get('id'),
+        habilidade=row.get('habilidade'),
+        competencia=row.get('competencia'),
+        enunciado=row.get('enunciado'),
+        image=image,
+        alternativas=alternativas_em_schemas,
+        resposta_correta=row.get('resposta_correta'),
+        dificuldade=row.get('dificuldade')
+    )
+
 def getQuestionByID(id: int):
     """
     Retorna uma questão como QuestionSchema dado o seu id.
@@ -23,32 +49,23 @@ def getQuestionByID(id: int):
     )
     rows = response.data
     if rows:
-        image = rows[0].get('image')
-        if image is None:
-            image = ""
-
-        alternativas = (rows[0].get('alternativas'))
-        alternativas_em_schemas = [
-            AlternativaSchema(letra="A", texto=str(alternativas["A"])),
-            AlternativaSchema(letra="B", texto=str(alternativas["B"])),
-            AlternativaSchema(letra="C", texto=str(alternativas["C"])),
-            AlternativaSchema(letra="D", texto=str(alternativas["D"])),
-            AlternativaSchema(letra="E", texto=str(alternativas["E"]))
-        ]
-
-        question = QuestionSchema(
-            id=rows[0].get('id'),
-            habilidade=rows[0].get('habilidade'),
-            competencia=rows[0].get('competencia'),
-            enunciado=rows[0].get('enunciado'),
-            image=image,
-            alternativas=alternativas_em_schemas,
-            resposta_correta=rows[0].get('resposta_correta'),
-            dificuldade=rows[0].get('dificuldade')
-        )
-        return question
+        return _rowToQuestion(rows[0])
     else:
         return None
+
+def getQuestionsByHabilidade(habilidade_id: int):
+    """
+    Retorna todas as questões de uma habilidade (matéria) como lista de QuestionSchema.
+    """
+    response = (
+        supabase.table("Question")
+        .select("*")
+        .eq("habilidade", habilidade_id)
+        .order("id")
+        .execute()
+    )
+    rows = response.data or []
+    return [_rowToQuestion(row) for row in rows]
 
 def getRandomQuestionByHabilidade(habilidade_id: int, exclude_ids: list[int] | None = None):
     """

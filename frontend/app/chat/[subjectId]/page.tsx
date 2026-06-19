@@ -571,7 +571,11 @@ export default function ChatPage({ params }: PageProps) {
         <Composer onSend={onSend} onCommand={runCommand} disabled={typing || !chatId} />
       </section>
 
-      <Inspector onOpenStudyPlan={() => setStudyPlanOpen(true)} />
+      <Inspector
+        onOpenStudyPlan={() => setStudyPlanOpen(true)}
+        habilidadeId={habilidadeId}
+        subjectTitle={subject.title}
+      />
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} onRun={runCommand} scope="chat" />
       <StudyPlanModal

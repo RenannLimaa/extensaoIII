@@ -2,12 +2,44 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.question import QuestionSchema
 from app.schemas.alternativa import AlternativaSchema
 from app.schemas.chatmessage import ChatMessageSchema
-from app.routes_back.questionDB_routes import getQuestionByID, getRandomQuestionByHabilidade
+from app.routes_back.questionDB_routes import getQuestionByID, getRandomQuestionByHabilidade, getQuestionsByHabilidade
 from app.routes_back.chatDB_routes import getChatByID
 from app.routes_back.chatmessageDB_routes import createChatMessage
 from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 
 router = APIRouter(prefix="/questions", tags=["questions"])
+
+@router.get("/habilidade/{habilidade_id}")
+def retrieveQuestionsByHabilidade(habilidade_id: int):
+    """
+        Lista todas as questões de uma habilidade (matéria), sem depender de chat.
+        Habilidades: 1=Linguagens 2=Ciências Humanas 3=Matemática 4=Ciências da Natureza 5=Redação
+
+        Ex de uso (questões de ciências): GET http://127.0.0.1:8000/questions/habilidade/4
+    """
+    questions = getQuestionsByHabilidade(habilidade_id)
+    if not questions:
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhuma questão disponível para esta matéria no momento",
+        )
+    return questions
+
+@router.get("/random/habilidade/{habilidade_id}")
+def randomQuestionByHabilidade(habilidade_id: int):
+    """
+        Retorna uma única questão aleatória de uma habilidade (matéria), sem depender de chat
+        e sem registrar mensagem. Versão "limpa" da /random/{chat_id}.
+
+        Ex de uso (questão de ciências): GET http://127.0.0.1:8000/questions/random/habilidade/4
+    """
+    question = getRandomQuestionByHabilidade(habilidade_id)
+    if not question:
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhuma questão disponível para esta matéria no momento",
+        )
+    return question
 
 @router.get("/{id}")
 def retrieveQuestionByID(id: int):

@@ -109,3 +109,18 @@ export async function randomQuestion(chatId: number) {
   });
   return asList(data);
 }
+
+/** GET /questions/habilidade/{habilidade_id} — lista todas as questões da matéria (sem chat) */
+export async function retrieveQuestionsByHabilidade(habilidadeId: number) {
+  const data = await request<QuestionSchema[] | null>(`/questions/habilidade/${habilidadeId}`, {
+    method: 'GET',
+  });
+  return asList(data);
+}
+
+/** GET /questions/random/habilidade/{habilidade_id} — uma questão aleatória da matéria (sem chat) */
+export function randomQuestionByHabilidade(habilidadeId: number) {
+  return request<QuestionSchema>(`/questions/random/habilidade/${habilidadeId}`, {
+    method: 'GET',
+  });
+}
