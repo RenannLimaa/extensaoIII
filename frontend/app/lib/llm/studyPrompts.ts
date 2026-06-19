@@ -44,14 +44,16 @@ export function buildQuizPrompt(question: Question, subjectTitle: string) {
 
 export function buildFixationQuestions(question: Question, correct: boolean): string[] {
   const first = correct
-    ? 'O que, no enunciado, te ajudou a chegar na alternativa certa?'
-    : 'Qual pista do enunciado ou da explicação você deixou passar?';
+    ? 'Qual foi o principal insight necessário para resolver esta questão?'
+    : 'Qual conceito ou interpretação mais contribuiu para o erro nesta questão?';
+
   const second = correct
-    ? `Como você explicaria a ideia central de ${question.assunto} sem usar o texto da questão?`
-    : `Qual passo do raciocínio em ${question.assunto} precisa ser retomado antes de tentar de novo?`;
+    ? 'Em que outro tipo de situação esse mesmo raciocínio pode ser aplicado?'
+    : 'Como reconhecer esse mesmo padrão antes de cometer o erro novamente?';
+
   const third = correct
-    ? `Se a banca trocasse o contexto dessa questão, o que continuaria valendo na explicação?`
-    : `Onde essa mesma armadilha poderia aparecer em outra questão da disciplina?`;
+    ? 'O que torna esta questão diferente de outras parecidas?'
+    : 'Qual sinal poderia indicar mais cedo que o caminho escolhido estava incorreto?';
 
   return [first, second, third];
 }

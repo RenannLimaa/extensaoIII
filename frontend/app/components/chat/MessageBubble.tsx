@@ -48,6 +48,7 @@ export function MessageBubble({ message, locked, onChoose, onFixationPrompt, onS
   const essaySubmitted = useEssaySubmitted(message.essayId);
   const [guidedOpen, setGuidedOpen] = useState(false);
   const fixationItems = message.feedback?.fixacao ?? [];
+  console.log(fixationItems)
   const hasGuidedFixation = fixationItems.length > 0;
   const renderedContent = !isUser ? stripGuidedQuestionSuffix(message.content) : message.content;
   console.log("Submetida", essaySubmitted, message.essayId)

@@ -144,6 +144,7 @@ def promptAIred(chat_id: int, essay_id: int, texto: str = Body(..., embed=True))
         Retorno: {"mensagens": [ChatMessageSchema1, ChatMessageSchema2, ...]}
     """
     resposta = getAnswertheQueryEssay(chat_id, essay_id, texto)
+    print(resposta)
     if not resposta:
         raise HTTPException(status_code=500, detail="Algum problema ocorreu ao processar o prompt")
     createChatMessage(chat_id, "user", texto, essay_id=essay_id)

@@ -3,7 +3,7 @@ from supabase import create_client, Client
 import os
 from app.schemas.chatmessage import ChatMessageSchema
 
-MAX_CHATMESSAGE_TEXTO_LEN = 3000
+MAX_CHATMESSAGE_TEXTO_LEN = 5000
 
 
 def _normalize_message_text(texto: str | None) -> str:
