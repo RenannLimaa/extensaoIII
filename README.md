@@ -124,3 +124,12 @@ From the repository root:
 ```bash
 npm run start
 ```
+# .env
+Segue esse modelo:
+```
+SUPABASE_URL = "url"
+SUPABASE_KEY = "key"
+
+GROQ_API_KEY = "key" #opcional
+GEMINI_API_KEY = "key"
+```
