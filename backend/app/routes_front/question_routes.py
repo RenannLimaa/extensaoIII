@@ -9,6 +9,10 @@ from app.routes_back.chatmessageDB_routes import getChatsMessagesByChat
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
+# ATENÇÃO À ORDEM: o FastAPI resolve as rotas na ordem de declaração.
+# As rotas mais específicas (/habilidade/... e /random/habilidade/...) precisam
+# vir ANTES de /{id} e /random/{chat_id}, senão estas as capturariam (e dariam 422).
+
 @router.get("/habilidade/{habilidade_id}")
 def retrieveQuestionsByHabilidade(habilidade_id: int):
     """

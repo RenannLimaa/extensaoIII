@@ -116,30 +116,8 @@ def getUnsolvedQuestion(user_id: int, habilidade: str, competencia: str):
     response = query.limit(1).execute()
     rows = response.data
 
-    # 3. Mapeamento para o QuestionSchema (idêntico ao seu método original)
+    # 3. Mapeamento para o QuestionSchema
     if rows:
-        image = rows[0].get('image')
-        if image is None:
-            image = ""
-
-        alternativas = rows[0].get('alternativas')
-        alternativas_em_schemas = [
-            AlternativaSchema(letra="A", texto=str(alternativas["A"])),
-            AlternativaSchema(letra="B", texto=str(alternativas["B"])),
-            AlternativaSchema(letra="C", texto=str(alternativas["C"])),
-            AlternativaSchema(letra="D", texto=str(alternativas["D"])),
-            AlternativaSchema(letra="E", texto=str(alternativas["E"]))
-        ]
-
-        question = QuestionSchema(
-            id=rows[0].get('id'),
-            habilidade=rows[0].get('habilidade'),
-            competencia=rows[0].get('competencia'),
-            enunciado=rows[0].get('enunciado'),
-            image=image,
-            alternativas=alternativas_em_schemas,
-            dificuldade=rows[0].get('dificuldade')
-        )
-        return question
+        return _rowToQuestion(rows[0])
     else:
         return None

@@ -67,7 +67,7 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
             <strong style={{ color: 'var(--text)' }}> — {total} questões</strong>
           )}
         </div>
-        <button className="insp-cta" onClick={drawRandom} disabled={loadingPreview || total === 0}>
+        <button className="insp-cta" onClick={drawRandom} disabled={loadingPreview || !total}>
           <span aria-hidden>🎲</span>
           {loadingPreview ? 'Sorteando…' : 'Sortear questão'}
         </button>
