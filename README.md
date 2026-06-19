@@ -1,3 +1,14 @@
+# ENEMBot
+
+Uma aplicação interativa para preparação do ENEM que combina um chat alimentado por LLM com um mecanismo inteligente de envio de questões organizadas por habilidade. A interface é baseada em chat com respostas por botões, cards de sugestões gerados por IA e um fluxo conversacional natural que incentiva o aprendizado autônomo.
+# Funcionalidades Principais
+
+Chat Interativo com Habilidades — Cada conversa ativa vincula-se a exatamente uma habilidade do ENEM + Redação. O usuário dispõe de um botão "Enviar Questão" que integra a questão ao fluxo do chat, mantendo o contexto da aprendizagem.
+
+Respostas Guiadas e Educativas — Após o usuário responder, cards fixos com perguntas complementares são sugeridos para aprofundar o entendimento. A IA é programada para não revelar respostas prematuramente, incentivando o raciocínio do usuário.
+
+Sugestões Contextualizadas — A aplicação oferece perguntas genéricas relacionadas ao assunto dentro do chat. Essas sugestões são dinamicamente geradas pela IA e servem como guia de aprendizado, permitindo que o usuário explore tópicos conexos antes de finalizar a questão.
+
 # Links para visualização de artefatos gerados
 
 **Documentos de Requisitos, FLuxos e estórias de usuário**
