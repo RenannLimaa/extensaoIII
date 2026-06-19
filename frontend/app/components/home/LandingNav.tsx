@@ -29,6 +29,9 @@ export function LandingNav({ onOpenCommand }: { onOpenCommand: () => void }) {
           <a href="#faq" className="landing-nav-link">
             FAQ
           </a>
+          <Link href="/banco" className="landing-nav-link">
+            Banco de questões
+          </Link>
         </nav>
 
         <div className="landing-nav-actions">
