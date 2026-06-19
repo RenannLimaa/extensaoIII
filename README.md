@@ -1,3 +1,18 @@
+# Links para visualização de artefatos gerados
+
+**Documentos de Requisitos, FLuxos e estórias de usuário**
+
+https://drive.google.com/drive/folders/1vJ2OqilobxDeF7XGFlK60K01md29TV9m?usp=sharing
+
+**Apresentação 1**: 
+
+https://canva.link/hs0kyh96g6xumx1
+
+**Apresentação 2**
+
+https://canva.link/zes3dcflj7v4suc
+
+
 # Running the backend
 
 ## Requirements
@@ -98,10 +113,3 @@ From the repository root:
 ```bash
 npm run start
 ```
-
-## Comandos para inicializar a Base de Dados
-
-1. CREATE DATABASE dbname;  //Apenas se a BD não existir
-2. CREATE USER "user" WITH PASSWORD 'pass'; // substituir pelo seu usuario e senha
-3. GRANT ALL PRIVILEGES ON DATABASE dbname TO "user"; // substuir com o nome da BD e do usuario
-4. GRANT ALL ON SCHEMA public TO 'user'; // Substituir com o nome de usuário
