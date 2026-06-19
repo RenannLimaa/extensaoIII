@@ -6,6 +6,7 @@ import {
   retrieveQuestionsByHabilidade,
 } from '../../lib/backendApi';
 import type { QuestionSchema } from '../../lib/backendTypes';
+import { QuestionPreviewCard } from '../questions/QuestionPreviewCard';
 
 type Props = {
   onOpenStudyPlan: () => void;
@@ -13,16 +14,9 @@ type Props = {
   subjectTitle: string;
 };
 
-function dificuldadeLabel(n: number): string {
-  if (n <= 1) return 'Fácil';
-  if (n === 2) return 'Média';
-  return 'Difícil';
-}
-
 export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props) {
   const [total, setTotal] = useState<number | null>(null);
   const [preview, setPreview] = useState<QuestionSchema | null>(null);
-  const [revealed, setRevealed] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +25,6 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
     let cancelled = false;
     setTotal(null);
     setPreview(null);
-    setRevealed(false);
     setError(null);
     retrieveQuestionsByHabilidade(habilidadeId)
       .then((qs) => {
@@ -48,7 +41,6 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
   // GET /questions/random/habilidade/{id} — sorteia uma questão da matéria (sem chat)
   const drawRandom = useCallback(async () => {
     setLoadingPreview(true);
-    setRevealed(false);
     setError(null);
     try {
       const q = await randomQuestionByHabilidade(habilidadeId);
@@ -87,29 +79,7 @@ export function Inspector({ onOpenStudyPlan, habilidadeId, subjectTitle }: Props
 
         {error && <p className="insp-error">{error}</p>}
 
-        {preview && (
-          <div className="q-preview">
-            <div className="q-preview-head">
-              <span className="q-preview-id">Questão #{preview.id}</span>
-              <span className="q-badge">{dificuldadeLabel(preview.dificuldade)}</span>
-            </div>
-            <p className="q-preview-enun">{preview.enunciado}</p>
-            <ul className="q-preview-alts">
-              {preview.alternativas.map((alt) => {
-                const correct = revealed && alt.letra === preview.resposta_correta;
-                return (
-                  <li key={alt.letra} className={correct ? 'correct' : undefined}>
-                    <span className="alt-letra">{alt.letra}</span>
-                    <span>{alt.texto}</span>
-                  </li>
-                );
-              })}
-            </ul>
-            <button className="q-reveal" onClick={() => setRevealed((r) => !r)}>
-              {revealed ? 'Ocultar resposta' : 'Ver resposta'}
-            </button>
-          </div>
-        )}
+        {preview && <QuestionPreviewCard key={preview.id} question={preview} />}
       </div>
     </aside>
   );
