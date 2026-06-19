@@ -28,6 +28,7 @@ def getChatsMessagesByChat(chat_id: int):
         supabase.table("ChatMessage")
         .select("*")
         .eq("chat_id", chat_id)
+        .order("timestamp", desc=False)  # asc, do mais antigo ao mais recente
         .execute()
     )
     rows = response.data
@@ -39,34 +40,36 @@ def getChatsMessagesByChat(chat_id: int):
                 chat_id=row.get('chat_id'),
                 author=row.get('author'),
                 texto=_normalize_message_text(row.get('texto')),
-                timestamp=str(row.get('timestamp')),
-                question_id=row.get('question_id')
+                timestamp=row.get('timestamp'),
+                question_id=row.get('question_id'),
+                essay_id=row.get('essay_id')
             )
             messages.append(message)
         return messages
     else:
         return None
 
-def createChatMessage(chat_id: int, author: str, texto: str, question_id: int=0):
+def createChatMessage(chat_id: int, author: str, texto: str, question_id: int | None = None, essay_id: int | None = None):
     """
-    Registra uma nova mensagem dado o id de chat, autor (system/user/llm) e id de questão, caso tenha uma questão associada.
+    Registra uma nova mensagem dado o id de chat, autor (system/user/llm) e id de questão ou redação associada.
 
     Retorna o ChatMessageSchema se obteve sucesso.
     """
     texto_normalizado = _normalize_message_text(texto)
 
-    if question_id != 0:
-        response = (
-            supabase.table("ChatMessage")
-            .insert({"chat_id": chat_id, "author": author, "texto": texto_normalizado, "question_id": question_id})
-            .execute()
-        )
-    else:
-        response = (
-            supabase.table("ChatMessage")
-            .insert({"chat_id": chat_id, "author": author, "texto": texto_normalizado})
-            .execute()
-        )
+    payload = {"chat_id": chat_id, "author": author, "texto": texto_normalizado}
+
+    if question_id is not None:
+        payload["question_id"] = question_id
+    elif essay_id is not None:
+        payload["essay_id"] = essay_id
+
+    response = (
+        supabase.table("ChatMessage")
+        .insert(payload)
+        .execute()
+    )
+
     rows = response.data
     if rows:
         message = ChatMessageSchema(
@@ -75,7 +78,8 @@ def createChatMessage(chat_id: int, author: str, texto: str, question_id: int=0)
             author=rows[0].get('author'),
             texto=_normalize_message_text(rows[0].get('texto')),
             timestamp=str(rows[0].get('timestamp')),
-            question_id=rows[0].get('question_id')
+            question_id=rows[0].get('question_id'),
+            essay_id=rows[0].get('essay_id')
         )
         return message
     else:
@@ -89,7 +93,7 @@ def updateChatMessage(message: ChatMessageSchema):
     """
     response = (
         supabase.table("ChatMessage")
-        .update({"id":message.id, "chat_id": message.chat_id, "author": message.author, "texto": message.texto, "timestamp": message.timestamp, "question_id": message.question_id})
+        .update({"id": message.id, "chat_id": message.chat_id, "author": message.author, "texto": message.texto, "timestamp": message.timestamp, "question_id": message.question_id, "essay_id": message.essay_id})
         .eq("id", message.id)
         .execute()
     )
@@ -137,8 +141,9 @@ def getMessagesRelatedToQuestion(chat_id: int, question_id: int) -> tuple[ChatMe
             chat_id=row.get('chat_id'),
             author=row.get('author'),
             texto=_normalize_message_text(row.get('texto')),
-            timestamp=str(row.get('timestamp')),
-            question_id=row.get('question_id')
+            timestamp=row.get('timestamp'),
+            question_id=row.get('question_id'),
+            essay_id=row.get('essay_id')
         )
         messages.append(message)
 
@@ -148,3 +153,38 @@ def getMessagesRelatedToQuestion(chat_id: int, question_id: int) -> tuple[ChatMe
     history_messages = messages[1:]      # restante = histórico normal
 
     return question_message, history_messages
+
+def getMessagesRelatedToEssay(chat_id: int, essay_id: int) -> tuple[ChatMessageSchema, list[ChatMessageSchema]]:
+    """
+        Retorna os chat_messages de um chat considerando apenas o id de um essay
+    """
+    response = supabase.table("ChatMessage") \
+        .select("*") \
+        .eq("chat_id", chat_id) \
+        .eq("essay_id", essay_id) \
+        .order("timestamp", desc=True) \
+        .execute()
+
+    rows = response.data
+    if not rows:
+        return None, []
+
+    messages = []
+    for row in rows:
+        message = ChatMessageSchema(
+            id=row.get('id'),
+            chat_id=row.get('chat_id'),
+            author=row.get('author'),
+            texto=row.get('texto'),
+            timestamp=row.get('timestamp'),
+            question_id=row.get('question_id'),
+            essay_id=row.get('essay_id')
+        )
+        messages.append(message)
+
+    messages = list(reversed(messages))  # ordem cronológica
+
+    essay_message = messages[0:2]          # primeiro = texto do tema/redação
+    history_messages = messages[2:]      # restante = histórico normal
+
+    return essay_message, history_messages

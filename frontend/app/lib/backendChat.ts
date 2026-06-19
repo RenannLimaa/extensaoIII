@@ -1,12 +1,13 @@
 import { retrieveQuestionById } from './backendApi';
 import { findSubject } from './catalog';
-import type { ChatMessageSchema, QuestionSchema } from './backendTypes';
+import type { ChatMessageSchema, QuestionSchema, EssaySchema } from './backendTypes';
 import { habilidadeNome, subjectToHabilidadeId } from './subjectHabilidade';
 import type {
   Alternative,
   AlternativeLetter,
   ChatMessage,
   Difficulty,
+  Essay,
   Question,
   SubjectId,
 } from './types';
@@ -15,6 +16,10 @@ const ORDER: AlternativeLetter[] = ['A', 'B', 'C', 'D', 'E'];
 
 export const NO_QUESTIONS_AVAILABLE =
   'Ainda não há questões disponíveis para esta matéria.';
+
+export const NO_THEMES_AVAILABLE =
+  'Ainda não há temas de redação disponíveis.';
+
 
 function isQuestionStubText(text: string): boolean {
   return /^Questão #\d+ dispon[ií]vel abaixo\.?$/i.test(text.trim());
@@ -85,6 +90,9 @@ function parseTimestamp(ts: string): number {
 type CachedQuestion = { question: Question };
 
 const questionCache = new Map<string, CachedQuestion>();
+
+// Cache simples sem subjectId pois redações não têm matéria
+const essayCache = new Map<number, Essay>();
 
 function cacheKey(chatSubjectId: SubjectId, questionId: number) {
   return `${chatSubjectId}:${questionId}`;
@@ -188,4 +196,52 @@ export function currentQuestionIdFromMessages(
   }
 
   return 0;
+}
+
+/* Métodos de Redação */
+
+export function mapBackendMessageEssay(msg: ChatMessageSchema, essayId?: number): ChatMessage {
+  const showCard = essayId != null;
+  let content = msg.texto;
+  if (
+    !showCard &&
+    msg.author === 'llm' &&
+    msg.essay_id != null &&
+    isQuestionStubText(msg.texto)
+  ) {
+    content = NO_THEMES_AVAILABLE;
+  }
+  return {
+    id: String(msg.id),
+    role: mapRole(msg.author),
+    content,
+    essayId: showCard ? essayId : undefined,
+    createdAt: parseTimestamp(msg.timestamp),
+  };
+}
+
+function presentationEssayMessageIds(list: ChatMessageSchema[]): Set<number> {
+  const ids = new Set<number>();
+  const seenEssay = new Set<number>();
+
+  for (const msg of list) {
+    if (msg.author !== 'llm' || msg.essay_id == null) continue;
+    if (seenEssay.has(msg.essay_id)) continue;
+    seenEssay.add(msg.essay_id);
+    ids.add(msg.id);
+  }
+
+  return ids;
+}
+
+export async function mapBackendMessagesEssay(
+  msgs: ChatMessageSchema[] | null | undefined,
+): Promise<ChatMessage[]> {
+  const list = Array.isArray(msgs) ? msgs : [];
+  const cardMsgIds = presentationEssayMessageIds(list);
+
+  return list.map((msg) => {
+    const isCard = cardMsgIds.has(msg.id) && msg.essay_id != null;
+    return mapBackendMessageEssay(msg, isCard ? (msg.essay_id ?? undefined) : undefined);
+  });
 }

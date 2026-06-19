@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes_front.user_routes import router as user_router
 from app.routes_front.chat_routes import router as chat_router
 from app.routes_front.question_routes import router as question_router
+from app.routes_front.essay_routes import router as essay_router
+from app.routes_front.theme_routes import router as theme_router
 
 
 app = FastAPI()
@@ -28,3 +30,5 @@ app.include_router(router)
 app.include_router(user_router)
 app.include_router(chat_router)
 app.include_router(question_router)
+app.include_router(essay_router)
+app.include_router(theme_router)

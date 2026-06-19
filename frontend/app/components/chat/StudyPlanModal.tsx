@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { promptAI } from '../../lib/backendApi';
+import { promptAI, promptAIred } from '../../lib/backendApi';
 import { mapBackendMessages } from '../../lib/backendChat';
 import type { SubjectId } from '../../lib/types';
 
@@ -12,6 +12,7 @@ type Props = {
   /** Obrigatório para chamar a IA real (PUT /chat/prompt). */
   chatId?: number | null;
   questionId?: number;
+  essayId: number | null
   subjectId?: SubjectId;
   habilidadeId?: number;
 };
@@ -21,6 +22,7 @@ export function StudyPlanModal({
   onOpenChange,
   chatId,
   questionId = 0,
+  essayId,
   subjectId = 'matematica',
   habilidadeId = 1,
 }: Props) {
@@ -45,7 +47,10 @@ export function StudyPlanModal({
         `Minutos por dia: ${minutes}`,
         `Dias: ${days}`,
       ].join(' ');
-      const raw = await promptAI(chatId, questionId, texto);
+      const raw =
+      habilidadeId === 5 && essayId
+        ? await promptAIred(chatId, essayId, texto)
+        : await promptAI(chatId, questionId, texto, 1);
       const mapped = await mapBackendMessages(raw, subjectId);
       const lastLlm = [...mapped].reverse().find((m) => m.role === 'assistant' && m.content);
       setReply(lastLlm?.content ?? 'A IA não retornou texto. Tente de novo no chat.');

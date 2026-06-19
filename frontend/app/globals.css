@@ -1213,6 +1213,27 @@ body::before {
 }
 .composer-hint .sep { opacity: 0.4; }
 
+.composer-input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.composer-voice-display {
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: default;
+}
+
+.voice-text-typed {
+  color: var(--text-primary);
+}
+
+.voice-text-live {
+  color: var(--text-muted);
+}
+
+
 /* Typing */
 .typing {
   display: inline-flex; align-items: center; gap: 3px;

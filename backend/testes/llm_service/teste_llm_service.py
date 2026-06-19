@@ -1,6 +1,6 @@
 from app.services.llm_service import LLMService
 
-from testes.llm_service.prompts import prompt1 as prompt
+from testes.llm_service.prompts import prompt3 as prompt
 from testes.llm_service.questions import question2 as question
 from testes.llm_service.queries import query1
 
@@ -22,7 +22,7 @@ app = FastAPI()
 
 @app.get("/ask")
 async def ask_question(knowledge_area: str, question: str, query: str):
-    service = LLMService('google', history = history)
+    service = LLMService('google', history = history, prompt=prompt)
 
     async def event_generator():
         # Itera sobre o gerador assíncrono do service

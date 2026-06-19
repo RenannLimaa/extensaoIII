@@ -1,10 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
 import type { AlternativeLetter, ChatMessage, SmartSuggestion } from '../../lib/types';
 import { MessageContent } from './MessageContent';
 import { QuestionCard } from './QuestionCard';
+import { EssayCard } from './EssayCard';
+import { useEffect, useState } from 'react';
+import { retrieveEssayById } from '../../lib/backendApi';
 
 type Props = {
   message: ChatMessage;
@@ -13,8 +15,9 @@ type Props = {
   onFixationPrompt?: (prompt: string, questionId?: number) => void;
   onSuggestion?: (s: SmartSuggestion) => void;
   onCopy?: () => void;
+  onSubmitEssay?: (essayId: number, text: string) => void;
+  onNext?: () => void;
 };
-
 function formatTime(ts: number) {
   const d = new Date(ts);
   return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -27,13 +30,27 @@ function stripGuidedQuestionSuffix(content: string) {
   }
   return lines.join('\n').trimEnd();
 }
+function useEssaySubmitted(essayId?: number) {
+  const [submitted, setSubmitted] = useState(false);
 
-export function MessageBubble({ message, locked, onChoose, onFixationPrompt, onSuggestion, onCopy }: Props) {
+  useEffect(() => {
+    if (!essayId) return;
+    retrieveEssayById(essayId).then((essay) => {
+      setSubmitted(essay?.text !== '');
+    });
+  }, [essayId]);
+
+  return submitted;
+}
+
+export function MessageBubble({ message, locked, onChoose, onFixationPrompt, onSuggestion, onCopy, onSubmitEssay, onNext }: Props) {
   const isUser = message.role === 'user';
+  const essaySubmitted = useEssaySubmitted(message.essayId);
   const [guidedOpen, setGuidedOpen] = useState(false);
   const fixationItems = message.feedback?.fixacao ?? [];
   const hasGuidedFixation = fixationItems.length > 0;
   const renderedContent = !isUser ? stripGuidedQuestionSuffix(message.content) : message.content;
+  console.log("Submetida", essaySubmitted, message.essayId)
 
   return (
     <>
@@ -50,11 +67,24 @@ export function MessageBubble({ message, locked, onChoose, onFixationPrompt, onS
           <div className="msg-header">
             <span className="name">{isUser ? 'Você' : 'ENEMBot'}</span>
             <span className="time">{formatTime(message.createdAt)}</span>
-          </div>
+        </div>
 
-          {renderedContent && (
+ 
+          {renderedContent && !message.essayId &&(
             <div className="msg-text">
               <MessageContent content={renderedContent} />
+            </div>
+          )}
+
+          {message.essayId && (
+            <div className="msg-question-wrap">
+              <EssayCard
+                theme={message.content}
+                essayId={message.essayId}
+                locked={locked || essaySubmitted}
+                onSubmit={(essayId, text) => onSubmitEssay?.(essayId, text)}
+                onNext={() => onNext?.()}
+              />
             </div>
           )}
 

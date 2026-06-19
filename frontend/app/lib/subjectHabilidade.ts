@@ -6,7 +6,7 @@ export const SUBJECT_HABILIDADE_ID: Record<SubjectId, number> = {
   humanas: 2,
   matematica: 3,
   natureza: 4,
-  redacao: 1,
+  redacao: 5,
 };
 
 const HABILIDADE_NOME: Record<number, string> = {
@@ -14,6 +14,7 @@ const HABILIDADE_NOME: Record<number, string> = {
   2: 'Ciências Humanas',
   3: 'Matemática',
   4: 'Ciências da Natureza',
+  5: 'Redação'
 };
 
 export function subjectToHabilidadeId(subjectId: SubjectId): number {

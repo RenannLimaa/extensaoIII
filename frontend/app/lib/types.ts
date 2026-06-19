@@ -35,6 +35,12 @@ export type Question = {
   explicacao: string;
 };
 
+export type Essay = {
+  id: number,
+  theme: number,
+  text: string
+}
+
 export type ChatRole = 'user' | 'assistant' | 'system';
 
 export type SmartSuggestion = {
@@ -64,6 +70,8 @@ export type ChatMessage = {
   question?: Question;
   /** Letra escolhida pelo aluno (se aplicavel) */
   chosen?: AlternativeLetter;
+  /** Quando a mensagem envolve uma redação */
+  essayId?: number;
   /** Feedback apos resposta */
   feedback?: {
     correta: boolean;
